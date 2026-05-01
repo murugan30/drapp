@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    ports:
+      - '127.0.0.1:4200:4200'
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: /api
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - '127.0.0.1:3000:3000'
+    env_file:
+      - .env.prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    restart: unless-stopped
