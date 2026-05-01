@@ -1,0 +1,38 @@
+@reference "tailwindcss";
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex flex-col items-stretch gap-3;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.gridTwo {
+  @apply grid gap-5 md:grid-cols-2;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.textMuted {
+  @apply text-gray-600;
+}
+
+.inlineRow {
+  @apply mt-3 flex items-center gap-3 flex-wrap;
+}
+
+.input {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7] w-24;
+}
+
+.button {
+  @apply bg-[#0254b7] text-white rounded-2xl px-4 py-2 text-sm font-semibold;
+}

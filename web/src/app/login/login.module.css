@@ -1,0 +1,88 @@
+@reference "tailwindcss";
+.loginShell {
+  @apply min-h-screen flex flex-col bg-[#0254b7];
+}
+
+.brand {
+  @apply h-[25vh] flex-none bg-[#0254b7] grid place-items-center text-white relative;
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  @apply text-xl font-semibold tracking-tight;
+}
+
+.switch {
+  @apply absolute top-4 right-4 text-sm font-semibold text-white;
+}
+
+.switchBtn {
+  @apply text-white;
+}
+
+.panel {
+  @apply min-h-[75vh] flex-1 bg-white border-t border-gray-200 px-6 py-6 flex flex-col gap-5;
+}
+
+.title {
+  @apply text-center text-xl font-semibold text-gray-900 mt-1 mb-3;
+}
+
+.subtitle {
+  @apply text-center text-sm text-gray-500 mt-2 mb-2;
+}
+
+.phoneRow {
+  @apply grid grid-cols-[72px_1fr] gap-3;
+}
+
+.input {
+  @apply bg-gray-100 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#0254b7];
+}
+
+.passwordWrap {
+  @apply mt-3;
+}
+
+.terms {
+  @apply text-center text-xs text-gray-500;
+}
+
+.terms span {
+  @apply text-[#0254b7] font-semibold;
+}
+
+.button {
+  @apply w-full bg-[#0254b7] text-white rounded-2xl py-3 text-sm font-semibold;
+}
+
+.buttonDisabled {
+  @apply bg-blue-200 text-blue-900;
+}
+
+.switchRow {
+  @apply mt-4 flex justify-center gap-4 text-sm;
+}
+
+.switchRow button {
+  @apply text-[#0254b7] font-semibold;
+}
+
+.otpRow {
+  @apply grid grid-cols-5 gap-2 justify-items-center mt-2;
+}
+
+.otpBox {
+  @apply w-11 h-11 border border-gray-200 rounded-xl grid place-items-center text-base text-gray-900 bg-white;
+}
+
+.otpHidden {
+  @apply absolute opacity-0 w-px h-px;
+}
+
+.otpWait {
+  @apply text-center text-sm text-gray-500;
+}

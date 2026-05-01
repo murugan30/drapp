@@ -1,0 +1,90 @@
+@reference "tailwindcss";
+
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex items-center justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.gridTwo {
+  @apply grid gap-5 md:grid-cols-2;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5 shadow-sm;
+}
+
+.cardTitle {
+  @apply text-base font-semibold tracking-tight text-gray-900;
+}
+
+.cardHeaderRow {
+  @apply flex items-center justify-between;
+}
+
+.textMuted {
+  @apply text-gray-600 mt-2 text-sm;
+}
+
+.tabs {
+  @apply inline-flex w-fit rounded-2xl bg-white border border-gray-200 p-1;
+}
+
+.tab {
+  @apply px-4 py-2 rounded-2xl text-sm font-semibold text-gray-600 hover:bg-gray-50;
+}
+
+.tabActive {
+  @apply bg-[#0254b7] text-white;
+}
+
+.formGrid {
+  @apply mt-4 grid gap-4;
+}
+
+.label {
+  @apply grid gap-2 text-sm font-semibold text-gray-700;
+}
+
+.input {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-3 text-sm outline-none focus:border-[#0254b7];
+}
+
+.actions {
+  @apply mt-2;
+}
+
+.button {
+  @apply inline-flex items-center justify-center bg-[#0254b7] text-white rounded-2xl px-4 py-3 text-sm font-semibold;
+}
+
+.buttonGhost {
+  @apply inline-flex items-center justify-center border border-gray-200 text-gray-700 rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-gray-50;
+}
+
+.error {
+  @apply text-sm font-semibold text-red-600;
+}
+
+.list {
+  @apply mt-4 grid gap-3;
+}
+
+.listRow {
+  @apply flex items-center justify-between rounded-2xl border border-gray-200 px-4 py-3;
+}
+
+.listTitle {
+  @apply font-semibold text-gray-900;
+}
+
+.pill {
+  @apply inline-flex items-center rounded-full bg-blue-50 text-[#0254b7] text-xs font-semibold px-3 py-1;
+}

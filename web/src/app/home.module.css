@@ -1,0 +1,60 @@
+@reference "tailwindcss";
+.main {
+  @apply p-8;
+}
+
+.hero {
+  @apply grid gap-6 md:grid-cols-[1.1fr_0.9fr] items-center bg-white rounded-2xl border border-gray-200 p-6;
+}
+
+.badge {
+  @apply inline-block bg-blue-50 text-[#0254b7] text-xs font-semibold px-3 py-1 rounded-full;
+}
+
+.headline {
+  @apply text-3xl md:text-4xl font-semibold mt-3;
+}
+
+.sub {
+  @apply text-gray-600 mt-3;
+}
+
+.ctaRow {
+  @apply flex flex-wrap gap-3 mt-5;
+}
+
+.ctaPrimary {
+  @apply bg-[#0254b7] text-white px-5 py-3 rounded-full text-sm font-semibold;
+}
+
+.ctaSecondary {
+  @apply border border-gray-200 text-gray-600 px-5 py-3 rounded-full text-sm;
+}
+
+.heroCard {
+  @apply bg-gradient-to-br from-sky-600 to-blue-800 text-white rounded-2xl p-6;
+}
+
+.heroCardText {
+  @apply text-white/85 mt-3;
+}
+
+.metricGrid {
+  @apply grid gap-3 mt-4;
+}
+
+.metricCard {
+  @apply bg-white/10 border border-white/20 rounded-xl p-3;
+}
+
+.features {
+  @apply grid gap-5 mt-8 md:grid-cols-2;
+}
+
+.featureCard {
+  @apply bg-white border border-gray-200 rounded-2xl p-6;
+}
+
+.featureText {
+  @apply text-gray-600 mt-3;
+}

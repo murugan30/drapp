@@ -1,0 +1,98 @@
+@reference "tailwindcss";
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex flex-col items-stretch gap-3;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.gridTwo {
+  @apply grid gap-5 md:grid-cols-2;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.button {
+  @apply bg-[#0254b7] text-white rounded-md px-4 py-2 text-sm font-semibold;
+}
+
+.buttonGhost {
+  @apply border border-gray-200 text-gray-700 rounded-md px-4 py-2 text-sm font-semibold hover:bg-gray-50;
+}
+
+.addCard {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.addTitle {
+  @apply font-semibold text-gray-900;
+}
+
+.formGrid {
+  @apply mt-4 grid gap-3 md:grid-cols-2;
+}
+
+.input {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+}
+
+.textarea {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7] md:col-span-2 min-h-[90px];
+}
+
+.actionRow {
+  @apply mt-4 flex items-center justify-end gap-2;
+}
+
+.error {
+  @apply mt-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-semibold;
+}
+
+.memberCard {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.memberCardActive {
+  @apply border-blue-300 bg-blue-50;
+}
+
+.memberTopRow {
+  @apply flex items-start justify-between gap-4;
+}
+
+.memberActions {
+  @apply flex items-center gap-2;
+}
+
+.viewLink {
+  @apply text-sm font-semibold text-[#0254b7] hover:text-[#02479d];
+}
+
+.memberNameRow {
+  @apply flex items-center gap-2;
+}
+
+.memberName {
+  @apply font-semibold text-gray-900;
+}
+
+.memberMeta {
+  @apply text-sm text-gray-700;
+}
+
+.activePill {
+  @apply inline-flex items-center rounded-full bg-[#0254b7] text-white px-2 py-0.5 text-[10px] font-semibold;
+}
+
+.textMuted {
+  @apply text-gray-600 mt-2;
+}

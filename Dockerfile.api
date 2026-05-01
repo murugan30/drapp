@@ -1,0 +1,18 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM deps AS builder
+COPY . .
+RUN npx nx build api
+
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist/api ./dist/api
+EXPOSE 3000
+CMD ["node", "dist/api/main.js"]

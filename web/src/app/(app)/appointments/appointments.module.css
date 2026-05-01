@@ -1,0 +1,436 @@
+@reference "tailwindcss";
+
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex flex-col items-stretch gap-3;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.headerBar {
+  @apply flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3;
+  @apply sm:flex-nowrap;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 60;
+}
+
+.backButton {
+  @apply inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900;
+}
+
+.backIcon {
+  @apply inline-block h-2.5 w-2.5 border-l-2 border-b-2 border-gray-700;
+  transform: rotate(45deg);
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.grid {
+  @apply grid gap-5;
+}
+
+.button {
+  @apply inline-flex items-center justify-center gap-2 bg-white text-[#0254b7] rounded-full px-6 py-3.5 text-[15px] font-bold shadow-md transition-transform hover:scale-105 active:scale-95;
+  @apply w-full sm:w-auto relative;
+}
+
+.button:disabled {
+  @apply bg-gray-200 text-gray-600;
+  cursor: not-allowed;
+}
+
+.textMuted {
+  @apply text-gray-600;
+}
+
+.controls {
+  @apply grid gap-3 md:grid-cols-[1fr_220px];
+}
+
+.select {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+  @apply w-full;
+}
+
+.bookingHeader {
+  @apply relative overflow-hidden flex flex-col items-stretch gap-5 rounded-3xl bg-gradient-to-br from-[#0254b7] to-[#0142A5] p-6 sm:p-8;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  box-shadow: 0 12px 32px -8px rgba(1, 101, 252, 0.4);
+}
+
+.bookingHeader::before {
+  content: '';
+  @apply absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full filter blur-[40px];
+  transform: translate(30%, -30%);
+}
+
+.bookingTitle {
+  @apply text-[22px] sm:text-2xl font-bold text-white leading-tight relative;
+}
+
+.bookingSub {
+  @apply mt-1.5 text-[14px] sm:text-sm font-medium text-blue-100 relative max-w-[280px] sm:max-w-none;
+}
+
+.memberPill {
+  @apply inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-[11px] font-semibold;
+  @apply w-fit;
+}
+
+.doctorBar {
+  @apply mt-4;
+}
+
+.doctorBarTitle {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.doctorStrip {
+  @apply mt-2 flex flex-wrap gap-2;
+}
+
+.doctorChip {
+  @apply rounded-2xl border border-gray-200 bg-white px-3 py-2 text-left;
+  flex: 1 1 160px;
+}
+
+.doctorChipActive {
+  @apply border-blue-300 bg-blue-50;
+}
+
+.doctorChipName {
+  @apply text-sm font-semibold text-gray-900 truncate;
+}
+
+.doctorChipMeta {
+  @apply mt-1 text-[11px] font-semibold text-gray-600;
+}
+
+.doctorSelectRow {
+  @apply mt-4 flex flex-col items-stretch gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3;
+  @apply md:flex-row md:items-center md:justify-between;
+}
+
+.doctorSelectLeft {
+  @apply flex items-center gap-3 min-w-0;
+}
+
+.doctorSelectText {
+  @apply flex flex-col min-w-0;
+}
+
+.doctorAvatar {
+  @apply h-10 w-10 rounded-2xl bg-blue-50 text-[#0254b7] grid place-items-center font-bold;
+}
+
+.doctorSelectName {
+  @apply font-semibold text-gray-900 leading-tight;
+}
+
+.doctorSelectMeta {
+  @apply mt-0.5 text-[11px] font-semibold text-gray-600;
+}
+
+.changeBtn {
+  @apply border border-gray-200 text-gray-700 rounded-2xl px-3 py-2 text-xs font-semibold hover:bg-gray-50;
+  @apply w-full md:w-auto;
+}
+
+.sheetOverlay {
+  @apply fixed inset-0 z-50 bg-black/40;
+}
+
+.sheet {
+  @apply fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-3xl border-t border-gray-200;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.sheetHeader {
+  @apply px-6 pt-4 pb-3 border-b border-gray-100;
+}
+
+.sheetHandle {
+  @apply mx-auto h-1.5 w-12 rounded-full bg-gray-200;
+}
+
+.sheetTitle {
+  @apply mt-3 text-base font-semibold text-gray-900;
+}
+
+.sheetSearch {
+  @apply mt-3 w-full bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+}
+
+.doctorList {
+  @apply max-h-[60vh] overflow-y-auto px-6 py-4 grid gap-3;
+}
+
+.doctorRow {
+  @apply flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3;
+}
+
+.doctorRowActive {
+  @apply border-blue-300 bg-blue-50;
+}
+
+.doctorRowLeft {
+  @apply flex items-center gap-3 min-w-0;
+}
+
+.doctorRowText {
+  @apply flex flex-col min-w-0;
+}
+
+.doctorRowName {
+  @apply font-semibold text-gray-900 leading-tight;
+}
+
+.doctorRowMeta {
+  @apply text-[11px] font-semibold text-gray-600;
+}
+
+.summaryRow {
+  @apply mt-3 flex flex-col items-stretch gap-2;
+  @apply sm:flex-row sm:items-center sm:justify-between sm:gap-3;
+}
+
+.summaryPill {
+  @apply inline-flex items-center rounded-full bg-blue-50 text-[#0254b7] px-3 py-1 text-[11px] font-semibold;
+}
+
+.dateBar {
+  @apply mt-4;
+}
+
+.dateNav {
+  @apply inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-gray-200 bg-white text-gray-900;
+}
+
+.dateStrip {
+  @apply grid gap-2;
+  @apply grid-cols-4 sm:grid-cols-7;
+}
+
+.dateChip {
+  @apply rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left;
+}
+
+.dateChipUnavailable {
+  @apply opacity-60 bg-gray-50;
+}
+
+.dateChipMeta {
+  @apply mt-1 text-[10px] font-semibold text-gray-500;
+}
+
+.dateChipActive {
+  @apply border-blue-300 bg-blue-50;
+}
+
+.dateChipDow {
+  @apply text-[11px] font-semibold text-gray-600;
+}
+
+.dateChipDay {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.timeGroups {
+  @apply mt-4 grid gap-4;
+}
+
+.timeGroupTitle {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.timeChips {
+  @apply mt-2 grid grid-cols-2 gap-2;
+  @apply sm:grid-cols-3;
+}
+
+.timeChip {
+  @apply rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm;
+}
+
+.timeChipActive {
+  @apply border-[#0254b7] bg-[#0254b7] text-white;
+}
+
+.timeChipDisabled {
+  @apply opacity-40 cursor-not-allowed;
+}
+
+.confirmRow {
+  @apply mt-4 flex flex-col items-stretch gap-2;
+  @apply sm:flex-row sm:items-center sm:justify-end;
+}
+
+.buttonGhost {
+  @apply border border-gray-200 text-gray-700 rounded-2xl px-4 py-2 text-sm font-semibold hover:bg-gray-50;
+  @apply w-full sm:w-auto;
+}
+
+.slotsGrid {
+  @apply mt-4 grid grid-cols-3 gap-2;
+}
+
+.slotBtn {
+  @apply border border-gray-200 rounded-2xl px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50;
+}
+
+.slotBtnDisabled {
+  @apply opacity-40 cursor-not-allowed hover:bg-white;
+}
+
+.bannerSuccess {
+  @apply mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 text-sm font-semibold;
+}
+
+.bannerError {
+  @apply mt-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-semibold;
+}
+
+.emptyState {
+  @apply mt-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-5 py-6;
+}
+
+.emptyTitle {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.emptySub {
+  @apply mt-1 text-xs font-semibold text-gray-600;
+}
+
+.upcomingList {
+  @apply mt-2 mb-6 grid gap-2;
+}
+
+.dayHeader {
+  @apply mt-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide;
+}
+
+.dayHeaderRow {
+  @apply mt-4 flex items-center justify-between;
+}
+
+.dayCount {
+  @apply text-[11px] font-semibold text-gray-500;
+}
+
+.upcomingRow {
+  @apply flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm;
+}
+
+.apptCard {
+  @apply flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm;
+  @apply md:grid md:grid-cols-[78px_1fr_auto] md:items-center md:gap-3;
+}
+
+.apptTimeCol {
+  @apply flex items-baseline justify-between;
+  @apply md:block md:text-center;
+}
+
+.apptTime {
+  @apply text-lg font-semibold text-gray-900 leading-none;
+}
+
+.apptDateSmall {
+  @apply mt-1 text-[11px] font-semibold text-gray-500;
+}
+
+.apptDetails {
+  @apply min-w-0;
+}
+
+.apptDoctor {
+  @apply font-semibold text-gray-900;
+}
+
+.apptMember {
+  @apply mt-1 text-[12px] font-semibold text-gray-600;
+}
+
+.apptRight {
+  @apply flex items-center gap-2 flex-wrap justify-end;
+}
+
+.statusDot {
+  @apply inline-block h-2 w-2 rounded-full;
+}
+
+.statusDotScheduled {
+  @apply bg-[#0254b7];
+}
+
+.statusDotCancelled {
+  @apply bg-red-500;
+}
+
+.statusDotCompleted {
+  @apply bg-emerald-500;
+}
+
+.apptLeft {
+  @apply flex items-center gap-3 min-w-0;
+}
+
+.apptAvatar {
+  @apply h-10 w-10 rounded-2xl bg-slate-100 text-slate-700 grid place-items-center font-bold;
+}
+
+.apptInfo {
+  @apply min-w-0;
+}
+
+.apptTitle {
+  @apply font-semibold text-gray-900 truncate;
+}
+
+.apptSub {
+  @apply mt-0.5 text-[11px] font-semibold text-gray-600 truncate;
+}
+
+.memberActions {
+  @apply flex items-center gap-2;
+}
+
+.upcomingMeta {
+  @apply mb-2 text-[17px] font-bold text-gray-900 tracking-tight;
+}
+
+.pill {
+  @apply inline-flex items-center rounded-full bg-blue-50 text-[#0254b7] px-2.5 py-1 text-[11px] font-semibold;
+}
+
+.pillMuted {
+  @apply inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-2.5 py-1 text-[11px] font-semibold;
+}
+
+.pillDanger {
+  @apply inline-flex items-center rounded-full bg-red-50 text-red-700 px-2.5 py-1 text-[11px] font-semibold;
+}
+
+.pillSuccess {
+  @apply inline-flex items-center rounded-full bg-emerald-50 text-emerald-800 px-2.5 py-1 text-[11px] font-semibold;
+}
+
+.cancelBtn {
+  @apply border border-red-200 text-red-700 rounded-2xl px-3 py-2 text-xs font-semibold hover:bg-red-50;
+}
+
+.actionBtn {
+  @apply border border-blue-200 text-[#0254b7] rounded-2xl px-3 py-2 text-xs font-semibold hover:bg-blue-50;
+}

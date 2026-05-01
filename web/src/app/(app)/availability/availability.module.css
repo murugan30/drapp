@@ -1,0 +1,231 @@
+@reference "tailwindcss";
+
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex flex-col items-stretch gap-3;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.textMuted {
+  @apply text-gray-600 mt-2 text-sm;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5 shadow-sm;
+}
+
+.gridTwo {
+  @apply grid gap-5 lg:grid-cols-[420px_1fr];
+}
+
+.topbarRight {
+  @apply flex items-center gap-3;
+}
+
+.monthTitle {
+  @apply font-semibold text-gray-900;
+}
+
+.button {
+  @apply inline-flex items-center justify-center bg-[#0254b7] text-white rounded-2xl px-4 py-2 text-sm font-semibold;
+}
+
+.buttonGhost {
+  @apply inline-flex items-center justify-center border border-gray-200 text-gray-700 rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-gray-50;
+}
+
+.buttonDanger {
+  @apply inline-flex items-center justify-center border border-red-200 text-red-700 rounded-2xl px-4 py-2.5 text-sm font-semibold hover:bg-red-50;
+}
+
+.weekHeader {
+  @apply grid grid-cols-7 gap-2;
+}
+
+.weekDay {
+  @apply text-xs font-semibold text-gray-600 text-center;
+}
+
+.calendarGrid {
+  @apply mt-3 grid grid-cols-7 gap-2;
+}
+
+.dayCell {
+  @apply rounded-2xl border border-gray-200 bg-white p-2 text-left hover:border-[#0254b7] transition-colors;
+}
+
+.dayCellMuted {
+  @apply opacity-40;
+}
+
+.dayCellSelected {
+  @apply border-[#0254b7] bg-blue-50;
+}
+
+.dayNumber {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.dotRow {
+  @apply mt-2;
+}
+
+.dot {
+  @apply inline-block h-2 w-2 rounded-full bg-[#0254b7];
+}
+
+.datePickerRow {
+  @apply mt-4 flex items-center gap-3;
+}
+
+.dateInput {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+}
+
+.cardHeaderRow {
+  @apply flex items-center justify-between;
+}
+
+.cardTitle {
+  @apply text-base font-semibold text-gray-900;
+}
+
+.meta {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.timelineWrap {
+  @apply mt-4 grid grid-cols-[64px_1fr] gap-3 items-start;
+}
+
+.timeCol {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.timeLabel {
+  @apply flex items-start justify-end pr-2;
+}
+
+.track {
+  @apply relative w-full overflow-y-auto rounded-2xl border border-gray-200 bg-white;
+}
+
+.trackInner {
+  @apply relative;
+}
+
+.hourLine {
+  @apply absolute left-0 right-0 border-t border-gray-100;
+}
+
+.slotBlock {
+  @apply absolute left-2 right-2 rounded-2xl bg-[#0254b7] text-white shadow-sm cursor-grab select-none;
+}
+
+.slotLabel {
+  @apply px-3 py-2 text-sm font-semibold;
+}
+
+.resizeHandle {
+  @apply absolute left-3 right-3 bottom-2 h-2 rounded-full bg-white/80 cursor-ns-resize;
+}
+
+.pendingBlock {
+  @apply absolute left-2 right-2 rounded-2xl border-2 border-dashed border-[#0254b7] bg-blue-50;
+}
+
+.pendingPanel {
+  @apply mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4;
+}
+
+.editPanel {
+  @apply mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4;
+}
+
+.pendingTitle {
+  @apply font-semibold text-gray-900;
+}
+
+.pendingRow {
+  @apply mt-3 flex items-center gap-2 flex-wrap;
+}
+
+.pendingTimes {
+  @apply font-semibold text-gray-900;
+}
+
+.hint {
+  @apply mt-3 text-xs font-semibold text-gray-600;
+}
+
+.slotList {
+  @apply mt-4 grid gap-3;
+}
+
+.slotRow {
+  @apply flex items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3;
+}
+
+.slotTime {
+  @apply font-semibold text-gray-900;
+}
+
+.slotEdit {
+  @apply flex items-center gap-2;
+}
+
+.slotActions {
+  @apply flex items-center gap-2;
+}
+
+.select {
+  @apply bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+}
+
+.to {
+  @apply text-sm text-gray-600;
+}
+
+.empty {
+  @apply text-sm text-gray-600;
+}
+
+.addBox {
+  @apply mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4;
+}
+
+.addTitle {
+  @apply font-semibold text-gray-900;
+}
+
+.addRow {
+  @apply mt-3 flex items-center gap-2 flex-wrap;
+}
+
+.recRow {
+  @apply mt-3 flex items-center justify-between gap-3 flex-wrap;
+}
+
+.checkboxRow {
+  @apply flex items-center gap-2 text-sm font-semibold text-gray-700;
+}
+
+.repeatRow {
+  @apply flex items-center gap-2;
+}
+
+.repeatInput {
+  @apply bg-white border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7] w-20;
+}
+
+.error {
+  @apply rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-semibold;
+}

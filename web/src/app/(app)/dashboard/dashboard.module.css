@@ -1,0 +1,106 @@
+@reference "tailwindcss";
+.wrapper {
+  @apply flex flex-col gap-6;
+}
+
+.topbar {
+  @apply flex flex-col items-stretch gap-3;
+  @apply sm:flex-row sm:items-center sm:justify-between;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 50;
+  background: white;
+}
+
+.badgeRow {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.badge {
+  @apply inline-block bg-blue-50 text-[#0254b7] text-xs font-semibold px-3 py-1 rounded-full;
+}
+
+.offlinePill {
+  @apply inline-flex items-center gap-2 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1;
+}
+
+.offlineDot {
+  @apply h-1.5 w-1.5 rounded-full bg-amber-500;
+}
+
+.title {
+  @apply mt-3 text-2xl font-semibold tracking-tight text-gray-900;
+}
+
+.subtitle {
+  @apply mt-2 text-sm text-gray-600;
+}
+
+.quickLinks {
+  @apply flex items-center gap-2;
+}
+
+.linkPill {
+  @apply inline-flex items-center rounded-full bg-white border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors;
+}
+
+.gridTwo {
+  @apply grid gap-5 md:grid-cols-2;
+}
+
+.gridThree {
+  @apply grid gap-5 md:grid-cols-3;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5 shadow-sm;
+}
+
+.cardHero {
+  @apply bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col gap-5;
+}
+
+.cardTitle {
+  @apply text-base font-semibold tracking-tight text-gray-900;
+}
+
+.statGrid {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.statCard {
+  @apply rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3;
+}
+
+.statLabel {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.statValue {
+  @apply mt-2 text-2xl font-semibold tracking-tight text-gray-900;
+}
+
+.actionRow {
+  @apply mt-4 flex flex-wrap items-center gap-3;
+}
+
+.cardLink {
+  @apply bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow;
+}
+
+.cardAction {
+  @apply mt-4 inline-flex text-xs font-semibold text-[#0254b7];
+}
+
+.textMuted {
+  @apply text-gray-600 mt-2 text-sm leading-6;
+}
+
+.button {
+  @apply inline-flex items-center justify-center bg-[#0254b7] text-white rounded-xl px-4 py-2.5 text-sm font-semibold;
+}
+
+.buttonGhost {
+  @apply inline-flex items-center justify-center border border-gray-200 text-gray-700 rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-gray-50;
+}

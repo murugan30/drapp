@@ -1,0 +1,8 @@
+@reference "tailwindcss";
+.text {
+  @apply text-center text-sm text-gray-500;
+}
+
+.text span {
+  @apply text-[#0254b7] font-semibold;
+}

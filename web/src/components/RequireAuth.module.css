@@ -1,0 +1,4 @@
+@reference "tailwindcss";
+.loading {
+  @apply max-w-sm mx-auto mt-12 border border-gray-200 rounded-xl p-4 text-gray-700;
+}

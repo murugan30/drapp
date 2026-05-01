@@ -1,0 +1,224 @@
+@reference "tailwindcss";
+.wrapper {
+  @apply flex flex-col gap-4;
+  min-height: 100vh;
+}
+
+.topbar {
+  @apply flex items-center justify-between;
+}
+
+.headerBar {
+  @apply flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3;
+  position: sticky;
+  position: -webkit-sticky;
+  top: var(--shell-top-offset, 0px);
+  z-index: 60;
+}
+
+.menuBtn {
+  @apply inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-gray-200 bg-white text-gray-900;
+}
+
+.dropdown {
+  @apply absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-200 bg-white shadow-lg p-1 z-50;
+}
+
+.dropdownItem {
+  @apply w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-gray-900 hover:bg-gray-50;
+}
+
+.dropdownItemDanger {
+  @apply w-full text-left px-3 py-2 rounded-xl text-sm font-semibold text-red-700 hover:bg-red-50;
+}
+
+.modalOverlay {
+  @apply fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center;
+}
+
+.modalCard {
+  @apply w-full sm:w-[520px] bg-white rounded-t-3xl sm:rounded-3xl p-5;
+}
+
+.modalTitle {
+  @apply text-base font-semibold text-gray-900;
+}
+
+.modalSub {
+  @apply mt-1 text-xs font-semibold text-gray-600;
+}
+
+.modalBody {
+  @apply mt-4 grid gap-3;
+}
+
+.fileRow {
+  @apply grid gap-2;
+}
+
+.fileRowInner {
+  @apply grid gap-2;
+}
+
+.fileName {
+  @apply text-xs font-semibold text-gray-600 break-words;
+}
+
+.modalActions {
+  @apply mt-4 flex flex-col gap-2;
+  @apply sm:flex-row sm:items-center sm:justify-end;
+}
+
+.headerTitleBlock {
+  @apply flex-1 min-w-0 text-center;
+}
+
+.headerTitle {
+  @apply font-semibold text-gray-900 truncate;
+}
+
+.headerSub {
+  @apply text-xs font-semibold text-gray-500 truncate;
+}
+
+.backButton {
+  @apply inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900;
+}
+
+.backIcon {
+  @apply inline-block h-2.5 w-2.5 border-l-2 border-b-2 border-gray-700;
+  transform: rotate(45deg);
+}
+
+.badge {
+  @apply inline-block bg-blue-50 text-[#0254b7] text-xs font-semibold px-3 py-1 rounded-full;
+}
+
+.actionsBar {
+  @apply mt-4 flex flex-col gap-2;
+  @apply sm:flex-row sm:items-center;
+}
+
+.primaryBtn {
+  @apply bg-[#0254b7] text-white rounded-2xl px-4 py-2 text-sm font-semibold;
+}
+
+.secondaryBtn {
+  @apply border border-gray-200 bg-white text-gray-900 rounded-2xl px-4 py-2 text-sm font-semibold;
+}
+
+.formCard {
+  @apply mt-4 bg-white border border-gray-200 rounded-2xl p-4;
+}
+
+.label {
+  @apply block text-xs font-semibold text-gray-600;
+}
+
+.input {
+  @apply mt-1 w-full bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+}
+
+.textarea {
+  @apply mt-1 w-full bg-gray-100 border border-gray-200 rounded-2xl px-3 py-2 text-sm outline-none focus:border-[#0254b7];
+  min-height: 96px;
+}
+
+.banner {
+  @apply mt-3 rounded-2xl border border-gray-200 bg-gray-50 text-gray-700 px-4 py-3 text-sm font-semibold;
+}
+
+.gridTwo {
+  @apply grid gap-5 md:grid-cols-2;
+}
+
+.card {
+  @apply bg-white border border-gray-200 rounded-2xl p-5;
+}
+
+.chatShell {
+  @apply bg-slate-100 border border-gray-200 rounded-2xl p-0;
+  @apply flex flex-col;
+  @apply flex-1;
+  min-height: 0;
+}
+
+.chatHeader {
+  @apply px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl;
+}
+
+.chatMessages {
+  @apply flex-1 overflow-y-auto px-4 py-4;
+  min-height: 0;
+}
+
+.dateDivider {
+  @apply my-3 flex items-center justify-center;
+}
+
+.dateDividerPill {
+  @apply inline-flex items-center rounded-full bg-white/80 border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-700;
+}
+
+.bubble {
+  @apply rounded-2xl p-4 mb-3 shadow-sm;
+  @apply max-w-[85%];
+}
+
+.bubbleLeft {
+  @apply bg-white text-gray-900 rounded-tl-md;
+}
+
+.bubbleRight {
+  @apply bg-[#0254b7] text-white rounded-tr-md ml-auto;
+}
+
+.bubbleTitle {
+  @apply font-semibold;
+}
+
+.bubbleBody {
+  @apply mt-1 text-sm whitespace-pre-wrap;
+}
+
+.bubbleMeta {
+  @apply mt-2 flex items-center justify-end;
+}
+
+.bubbleTime {
+  @apply text-[11px] font-semibold;
+  @apply text-white/80;
+}
+
+.bubbleTimeMuted {
+  @apply text-[11px] font-semibold text-gray-500;
+}
+
+.composer {
+  @apply border-t border-gray-200 bg-white rounded-b-2xl px-4 py-3;
+}
+
+
+.chatMessageLeft {
+  @apply bg-white text-gray-900 rounded-2xl rounded-tl-md p-4 mb-3 shadow-sm max-w-[70%];
+}
+
+.chatMessageRight {
+  @apply bg-[#0254b7] text-white rounded-2xl rounded-tr-md p-4 mb-3 shadow-sm max-w-[70%] ml-auto;
+}
+
+.textSmall {
+  @apply text-xs text-gray-500 mt-2;
+}
+
+.docList {
+  @apply grid gap-3 mt-3;
+}
+
+.docCard {
+  @apply bg-white border border-gray-200 rounded-xl p-4 shadow-none;
+}
+
+.docMeta {
+  @apply text-xs text-gray-500;
+}

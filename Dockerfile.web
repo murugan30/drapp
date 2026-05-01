@@ -1,0 +1,20 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM deps AS builder
+COPY . .
+ARG NEXT_PUBLIC_API_URL=http://localhost:3000/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+RUN npx nx build web
+
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/web ./web
+EXPOSE 4200
+CMD ["sh", "-c", "cd /app/web && npx next start -p 4200"]

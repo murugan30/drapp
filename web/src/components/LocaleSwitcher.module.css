@@ -1,0 +1,8 @@
+@reference "tailwindcss";
+.switcher {
+  @apply inline-flex gap-1 border border-gray-200 rounded-full p-1 bg-white;
+}
+
+.chip {
+  @apply text-xs px-3 py-1 rounded-full text-gray-600 hover:bg-blue-50 hover:text-[#0254b7];
+}
