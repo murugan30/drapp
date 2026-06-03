@@ -15,6 +15,6 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/web ./web
+COPY --from=builder /app/dist/web ./web
 EXPOSE 4200
 CMD ["sh", "-c", "cd /app/web && npx next start -p 4200"]
