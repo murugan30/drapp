@@ -12,7 +12,14 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
-import { BootstrapAdminDto, RequestOtpDto, StaffLoginDto, VerifyOtpDto } from './auth.dto';
+import {
+  BootstrapAdminDto,
+  LoginDto,
+  PasswordResetConfirmDto,
+  PasswordResetRequestOtpDto,
+  RegisterPatientDto,
+  StaffLoginDto,
+} from './auth.dto';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
 import { UsersService } from '../users/users.service';
 import { Role } from '../common/roles';
@@ -29,6 +36,19 @@ export class AuthController {
   @Post('staff/login')
   async staffLogin(@Body() dto: StaffLoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.staffLogin(dto.mobile, dto.password);
+    res.cookie('drapp_token', result.accessToken, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    });
+    return result;
+  }
+
+  @Post('login')
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.passwordLogin(dto.mobile, dto.password);
     res.cookie('drapp_token', result.accessToken, {
       httpOnly: true,
       sameSite: 'lax',
@@ -77,14 +97,16 @@ export class AuthController {
     return result;
   }
 
-  @Post('patient/request-otp')
-  requestOtp(@Body() dto: RequestOtpDto) {
-    return this.authService.requestOtp(dto.mobile);
-  }
-
-  @Post('patient/verify-otp')
-  async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.verifyOtp(dto.mobile, dto.code);
+  @Post('patient/register')
+  async registerPatient(@Body() dto: RegisterPatientDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.registerPatient(dto.mobile, dto.password, {
+      fullName: dto.fullName,
+      dob: dto.dob,
+      gender: dto.gender,
+      relationship: dto.relationship,
+      phone: dto.phone,
+      notes: dto.notes,
+    });
     res.cookie('drapp_token', result.accessToken, {
       httpOnly: true,
       sameSite: 'lax',
@@ -93,6 +115,16 @@ export class AuthController {
       path: '/',
     });
     return result;
+  }
+
+  @Post('password-reset/request-otp')
+  requestPasswordResetOtp(@Body() dto: PasswordResetRequestOtpDto) {
+    return this.authService.requestPasswordResetOtp(dto.mobile);
+  }
+
+  @Post('password-reset/confirm')
+  confirmPasswordReset(@Body() dto: PasswordResetConfirmDto) {
+    return this.authService.confirmPasswordReset(dto.mobile, dto.code, dto.newPassword);
   }
 
   @Post('logout')

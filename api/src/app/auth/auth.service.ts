@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/user.schema';
+import { PatientsService } from '../patients/patients.service';
 import { Otp, OtpDocument } from './otp.schema';
 import { Role } from '../common/roles';
 import { SmsService } from './sms.service';
@@ -13,12 +14,13 @@ import { SmsService } from './sms.service';
 export class AuthService {
   constructor(
     private usersService: UsersService,
+    private patientsService: PatientsService,
     private jwtService: JwtService,
     private smsService: SmsService,
     @InjectModel(Otp.name) private otpModel: Model<OtpDocument>,
   ) {}
 
-  async staffLogin(mobile: string, password: string) {
+  async passwordLogin(mobile: string, password: string) {
     const user = await this.usersService.findByMobile(mobile, true);
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
@@ -27,16 +29,63 @@ export class AuthService {
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if (user.role === Role.Patient) {
-      throw new UnauthorizedException('Use OTP for patient login');
-    }
     return this.signToken(user);
   }
 
-  async requestOtp(mobile: string) {
-    const user = await this.usersService.createPatientIfMissing(mobile);
-    if (user.role !== Role.Patient) {
-      throw new BadRequestException('Mobile belongs to staff account');
+  async staffLogin(mobile: string, password: string) {
+    return this.passwordLogin(mobile, password);
+  }
+
+  async registerPatient(
+    mobile: string,
+    password: string,
+    member: {
+      fullName: string;
+      dob?: string;
+      gender?: 'male' | 'female' | 'other';
+      relationship?: string;
+      phone?: string;
+      notes?: string;
+    },
+  ) {
+    const existing = await this.usersService.findByMobile(mobile, true);
+    if (existing) {
+      if (existing.role !== Role.Patient) {
+        throw new BadRequestException('Mobile belongs to staff account');
+      }
+      if (existing.passwordHash) {
+        throw new BadRequestException('Mobile already registered');
+      }
+      await this.usersService.setPasswordById(existing.id, password);
+    } else {
+      await this.usersService.createPatientIfMissing(mobile);
+      await this.usersService.setPasswordByMobile(mobile, password);
+    }
+
+    const user = await this.usersService.findByMobile(mobile);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const members = await this.patientsService.listByOwner(user.id);
+    if ((members || []).length === 0) {
+      await this.patientsService.createForOwner(user.id, {
+        fullName: member.fullName,
+        dob: member.dob,
+        gender: member.gender,
+        relationship: member.relationship,
+        phone: member.phone || mobile,
+        notes: member.notes,
+      });
+    }
+
+    return this.signToken(user);
+  }
+
+  async requestPasswordResetOtp(mobile: string) {
+    const user = await this.usersService.findByMobile(mobile);
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
     const recent = await this.otpModel
@@ -63,7 +112,7 @@ export class AuthService {
     return { success: true };
   }
 
-  async verifyOtp(mobile: string, code: string) {
+  async confirmPasswordReset(mobile: string, code: string, newPassword: string) {
     const otp = await this.otpModel.findOne({ mobile });
     if (!otp) {
       throw new UnauthorizedException('OTP expired');
@@ -82,12 +131,10 @@ export class AuthService {
       await otp.save();
       throw new UnauthorizedException('Invalid OTP');
     }
+
     await otp.deleteOne();
-    const user = await this.usersService.findByMobile(mobile);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return this.signToken(user);
+    await this.usersService.setPasswordByMobile(mobile, newPassword);
+    return { success: true };
   }
 
   private signToken(user: UserDocument) {

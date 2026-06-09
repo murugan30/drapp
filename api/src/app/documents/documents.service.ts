@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuid } from 'uuid';
 import { DocumentEntity, DocumentDocument } from './document.schema';
@@ -9,27 +9,54 @@ import { CreateDocumentDto } from './documents.dto';
 
 @Injectable()
 export class DocumentsService {
+  private region = (process.env.S3_REGION || 'us-east-1').trim();
+  private endpoint = (process.env.S3_ENDPOINT || '').trim() || undefined;
+  private forcePathStyle = !!this.endpoint;
+
   private s3 = new S3Client({
-    region: process.env.S3_REGION || 'us-east-1',
-    endpoint: process.env.S3_ENDPOINT,
-    credentials: process.env.S3_ACCESS_KEY
+    region: this.region,
+    endpoint: this.endpoint,
+    credentials: (process.env.S3_ACCESS_KEY || '').trim()
       ? {
-        accessKeyId: process.env.S3_ACCESS_KEY,
-        secretAccessKey: process.env.S3_SECRET_KEY || '',
+        accessKeyId: (process.env.S3_ACCESS_KEY || '').trim(),
+        secretAccessKey: (process.env.S3_SECRET_KEY || '').trim(),
       }
       : undefined,
-    forcePathStyle: !!process.env.S3_ENDPOINT,
+    forcePathStyle: this.forcePathStyle,
   });
 
-  private bucket = process.env.S3_BUCKET || 'clinic-docs';
+  private bucket = (process.env.S3_BUCKET || 'clinic-docs').trim();
 
   private isS3Configured() {
     return !!(
-      process.env.S3_ACCESS_KEY ||
+      (process.env.S3_ACCESS_KEY || '').trim() ||
       process.env.AWS_ACCESS_KEY_ID ||
       process.env.AWS_PROFILE ||
       process.env.AWS_WEB_IDENTITY_TOKEN_FILE
     );
+  }
+
+  getStorageStatus() {
+    return {
+      mode: this.isS3Configured() ? ('s3' as const) : ('local' as const),
+      bucket: this.bucket,
+      region: this.region,
+      endpoint: this.endpoint || null,
+      forcePathStyle: this.forcePathStyle,
+    };
+  }
+
+  async checkS3BucketAccess() {
+    const status = this.getStorageStatus();
+    if (status.mode !== 's3') {
+      return { ok: false as const, status, error: 'S3 is not configured' };
+    }
+    try {
+      await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
+      return { ok: true as const, status };
+    } catch (e: any) {
+      return { ok: false as const, status, error: e?.name || e?.message || 'S3 bucket check failed' };
+    }
   }
 
   constructor(

@@ -28,15 +28,14 @@ const EyeOff = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
     <line x1="2" x2="22" y1="2" y2="22" />
   </svg>
 );
-type PatientForm = { phone: string };
 type StaffForm = { phone: string; password: string };
-type OtpForm = { otp: string };
+type OtpForm = { otp: string; newPassword: string };
 type PatientMember = { _id: string };
 
 export default function LoginPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const { loginStaff, requestOtp, verifyOtp } = useAuth();
+  const { login, requestPasswordResetOtp, confirmPasswordReset } = useAuth();
   const isStaffRoute = pathname?.startsWith('/login/staff');
 
   const [mode, setMode] = useState<'patient' | 'staff'>(isStaffRoute ? 'staff' : 'patient');
@@ -48,9 +47,8 @@ export default function LoginPage() {
 
   const otpInputRef = useRef<HTMLInputElement[]>([]);
 
-  const patientForm = useForm<PatientForm>({ defaultValues: { phone: '' } });
   const staffForm = useForm<StaffForm>({ defaultValues: { phone: '', password: '' } });
-  const otpForm = useForm<OtpForm>({ defaultValues: { otp: '' } });
+  const otpForm = useForm<OtpForm>({ defaultValues: { otp: '', newPassword: '' } });
 
   const otpValue = otpForm.watch('otp') || '';
   const otpDigits = useMemo(() => {
@@ -75,27 +73,18 @@ export default function LoginPage() {
   };
 
   const sendOtp = async (phone: string) => {
-    const res = await requestOtp(phone);
+    const res = await requestPasswordResetOtp(phone);
     setOtpSent(true);
     setOtpSeconds(60);
     setDevOtp(res.otp ?? null);
     otpForm.setValue('otp', '');
+    otpForm.setValue('newPassword', '');
     setTimeout(() => otpInputRef.current[0]?.focus(), 50);
   };
 
-  const onSubmitPatient = patientForm.handleSubmit(async (data) => {
-    const phone = data.phone.trim();
-    setMobile(phone);
-    await sendOtp(phone);
-  });
-
   const onSubmitStaff = staffForm.handleSubmit(async (data) => {
-    await loginStaff(data.phone.trim(), data.password);
-    router.push('/dashboard');
-  });
-
-  const onSubmitOtp = otpForm.handleSubmit(async (data) => {
-    const user = await verifyOtp(mobile, data.otp.trim());
+    const phone = data.phone.trim();
+    const user = await login(phone, data.password);
     if (user.role === 'patient') {
       const members = await apiFetch<PatientMember[]>('/patients/my');
       if ((members || []).length === 0) {
@@ -106,6 +95,14 @@ export default function LoginPage() {
       return;
     }
     router.push('/dashboard');
+  });
+
+  const onSubmitOtp = otpForm.handleSubmit(async (data) => {
+    await confirmPasswordReset(mobile, data.otp.trim(), data.newPassword);
+    setOtpSent(false);
+    setDevOtp(null);
+    otpForm.setValue('otp', '');
+    otpForm.setValue('newPassword', '');
   });
 
   const handleResendOtp = async () => {
@@ -128,6 +125,7 @@ export default function LoginPage() {
     setOtpSent(false);
     setDevOtp(null);
     otpForm.setValue('otp', '');
+    otpForm.setValue('newPassword', '');
   }, [isStaffRoute, otpForm]);
 
   if (otpSent) {
@@ -184,7 +182,7 @@ export default function LoginPage() {
 
           <button
             onClick={onSubmitOtp}
-            disabled={otpValue.replace(/\D/g, '').length < 6}
+            disabled={otpValue.replace(/\D/g, '').length < 6 || (otpForm.watch('newPassword') || '').length < 6}
             className={`w-full rounded-full py-4 text-[17px] font-semibold transition-all ${otpValue.replace(/\D/g, '').length < 6
               ? 'bg-blue-300 text-white/90 cursor-not-allowed shadow-none'
               : 'bg-[#0254b7] text-white shadow-lg shadow-blue-500/25 active:scale-[0.98]'
@@ -192,6 +190,26 @@ export default function LoginPage() {
           >
             Verify
           </button>
+
+          <div className="mt-6 flex flex-col gap-2 relative">
+            <label className="text-[14px] font-medium text-gray-700 ml-1">New Password</label>
+            <div className="relative flex items-center w-full bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#0254b7] focus-within:ring-1 focus-within:ring-[#0254b7]/30 transition-all shadow-sm">
+              <input
+                className="w-full bg-transparent pl-4 pr-12 py-4 text-[15px] text-gray-900 outline-none placeholder:text-gray-400"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="****************"
+                {...otpForm.register('newPassword', { required: true, minLength: 6 })}
+              />
+              <button
+                type="button"
+                className="absolute right-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-[18px] h-[18px]" strokeWidth={2.5} /> : <Eye className="w-[18px] h-[18px]" strokeWidth={2.5} />}
+              </button>
+            </div>
+          </div>
 
           {process.env.NODE_ENV !== 'production' && devOtp ? (
             <div className="mt-8 text-center text-[13px] text-gray-400">
@@ -212,7 +230,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={mode === 'staff' ? onSubmitStaff : onSubmitPatient} className="flex flex-col gap-5">
+        <form onSubmit={onSubmitStaff} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <label className="text-[14px] font-medium text-gray-700 ml-1">Phone Number</label>
             <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#0254b7] focus-within:ring-1 focus-within:ring-[#0254b7]/30 transition-all shadow-sm">
@@ -224,48 +242,51 @@ export default function LoginPage() {
                 placeholder="Enter your phone number"
                 type="tel"
                 inputMode="tel"
-                {...(mode === 'staff'
-                  ? staffForm.register('phone', { required: true, pattern: /^[0-9]{10}$/ })
-                  : patientForm.register('phone', { required: true, pattern: /^[0-9]{10}$/ }))}
+                {...staffForm.register('phone', { required: true, pattern: /^[0-9]{10}$/ })}
               />
             </div>
           </div>
 
-          {mode === 'staff' && (
-            <div className="flex flex-col gap-2 relative">
-              <label className="text-[14px] font-medium text-gray-700 ml-1">Password</label>
-              <div className="relative flex items-center w-full bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#0254b7] focus-within:ring-1 focus-within:ring-[#0254b7]/30 transition-all shadow-sm">
-                <input
-                  className="w-full bg-transparent pl-4 pr-12 py-4 text-[15px] text-gray-900 outline-none placeholder:text-gray-400"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="****************"
-                  {...staffForm.register('password', { required: true, minLength: 6 })}
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff className="w-[18px] h-[18px]" strokeWidth={2.5} /> : <Eye className="w-[18px] h-[18px]" strokeWidth={2.5} />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {mode === 'staff' && (
-            <div className="flex justify-end mt-[-4px]">
-              <button type="button" className="text-[#0254b7] text-[13.5px] font-medium hover:underline underline-offset-2">
-                Forgot Password?
+          <div className="flex flex-col gap-2 relative">
+            <label className="text-[14px] font-medium text-gray-700 ml-1">Password</label>
+            <div className="relative flex items-center w-full bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#0254b7] focus-within:ring-1 focus-within:ring-[#0254b7]/30 transition-all shadow-sm">
+              <input
+                className="w-full bg-transparent pl-4 pr-12 py-4 text-[15px] text-gray-900 outline-none placeholder:text-gray-400"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="****************"
+                {...staffForm.register('password', { required: true, minLength: 6 })}
+              />
+              <button
+                type="button"
+                className="absolute right-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-[18px] h-[18px]" strokeWidth={2.5} /> : <Eye className="w-[18px] h-[18px]" strokeWidth={2.5} />}
               </button>
             </div>
-          )}
+          </div>
+
+          <div className="flex justify-end mt-[-4px]">
+            <button
+              type="button"
+              className="text-[#0254b7] text-[13.5px] font-medium hover:underline underline-offset-2"
+              onClick={async () => {
+                const phone = staffForm.getValues('phone').trim();
+                if (!phone) return;
+                setMobile(phone);
+                await sendOtp(phone);
+              }}
+            >
+              Forgot Password?
+            </button>
+          </div>
 
           <button
             type="submit"
             className="w-full bg-[#0254b7] text-white rounded-full py-4 text-[17px] font-semibold mt-4 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all"
           >
-            {mode === 'staff' ? 'Sign In' : 'Sign In with OTP'}
+            Sign In
           </button>
         </form>
 
@@ -289,11 +310,23 @@ export default function LoginPage() {
                 className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
                 onClick={() => router.push('/login')}
               >
-                Sign In via OTP
+                Sign In Here
               </button>
             </>
           )}
         </div>
+
+        {mode === 'patient' ? (
+          <div className="mt-4 text-center text-[14px] text-gray-600">
+            <button
+              type="button"
+              className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
+              onClick={() => router.push('/register')}
+            >
+              New patient? Register
+            </button>
+          </div>
+        ) : null}
       </div>
     </main>
   );

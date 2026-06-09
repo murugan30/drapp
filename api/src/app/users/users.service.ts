@@ -17,7 +17,7 @@ export class UsersService {
 
   async createStaff(dto: CreateStaffDto) {
     if (dto.role === Role.Patient) {
-      throw new BadRequestException('Patient users must use OTP onboarding.');
+      throw new BadRequestException('Patient users must register via the patient registration flow.');
     }
     const existing = await this.userModel.findOne({ mobile: dto.mobile });
     if (existing) {
@@ -57,6 +57,32 @@ export class UsersService {
 
   async findById(id: string) {
     const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async setPasswordById(userId: string, password: string) {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { passwordHash },
+      { new: true },
+    );
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async setPasswordByMobile(mobile: string, password: string) {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.userModel.findOneAndUpdate(
+      { mobile },
+      { passwordHash },
+      { new: true },
+    );
     if (!user) {
       throw new NotFoundException('User not found');
     }

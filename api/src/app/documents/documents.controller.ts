@@ -59,6 +59,12 @@ export class DocumentsController {
     return this.documentsService.createPresignedUpload(req.user.sub, dto, apiBase);
   }
 
+  @Roles(Role.Admin)
+  @Get('storage/status')
+  async storageStatus() {
+    return this.documentsService.checkS3BucketAccess();
+  }
+
   @Roles(Role.Admin, Role.Doctor, Role.Assistant, Role.Lab, Role.Patient)
   @Put('local-upload')
   async localUpload(@Req() req: any, @Query('documentId') documentId: string, @Res() res: Response) {

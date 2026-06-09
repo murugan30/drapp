@@ -14,17 +14,29 @@ export type AuthUser = {
   slotMinutes?: number;
 };
 
-type RequestOtpResponse = {
+type RequestPasswordResetOtpResponse = {
   success: boolean;
   otp?: string;
+};
+
+type RegisterPatientPayload = {
+  mobile: string;
+  password: string;
+  fullName: string;
+  dob?: string;
+  gender?: 'male' | 'female' | 'other';
+  relationship?: string;
+  phone?: string;
+  notes?: string;
 };
 
 type AuthContextValue = {
   user: AuthUser | null;
   loading: boolean;
-  loginStaff: (mobile: string, password: string) => Promise<void>;
-  requestOtp: (mobile: string) => Promise<RequestOtpResponse>;
-  verifyOtp: (mobile: string, code: string) => Promise<AuthUser>;
+  login: (mobile: string, password: string) => Promise<AuthUser>;
+  registerPatient: (payload: RegisterPatientPayload) => Promise<AuthUser>;
+  requestPasswordResetOtp: (mobile: string) => Promise<RequestPasswordResetOtpResponse>;
+  confirmPasswordReset: (mobile: string, code: string, newPassword: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => void;
 };
@@ -54,9 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hydrate();
   }, [hydrate]);
 
-  const loginStaff = useCallback(async (mobile: string, password: string) => {
+  const login = useCallback(async (mobile: string, password: string) => {
     const res = await apiFetch<{ accessToken: string; user: AuthUser }>(
-      '/auth/staff/login',
+      '/auth/login',
       {
         method: 'POST',
         body: JSON.stringify({ mobile, password }),
@@ -66,28 +78,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `locale=${res.user.preferredLocale}; path=/; max-age=31536000`;
     }
     setUser(res.user);
+    return res.user;
   }, []);
 
-  const requestOtp = useCallback(async (mobile: string) => {
-    return await apiFetch<RequestOtpResponse>('/auth/patient/request-otp', {
+  const registerPatient = useCallback(async (payload: RegisterPatientPayload) => {
+    const res = await apiFetch<{ accessToken: string; user: AuthUser }>('/auth/patient/register', {
       method: 'POST',
-      body: JSON.stringify({ mobile }),
+      body: JSON.stringify(payload),
     });
-  }, []);
-
-  const verifyOtp = useCallback(async (mobile: string, code: string) => {
-    const res = await apiFetch<{ accessToken: string; user: AuthUser }>(
-      '/auth/patient/verify-otp',
-      {
-        method: 'POST',
-        body: JSON.stringify({ mobile, code }),
-      },
-    );
     if (res.user.preferredLocale) {
       document.cookie = `locale=${res.user.preferredLocale}; path=/; max-age=31536000`;
     }
     setUser(res.user);
     return res.user;
+  }, []);
+
+  const requestPasswordResetOtp = useCallback(async (mobile: string) => {
+    return await apiFetch<RequestPasswordResetOtpResponse>('/auth/password-reset/request-otp', {
+      method: 'POST',
+      body: JSON.stringify({ mobile }),
+    });
+  }, []);
+
+  const confirmPasswordReset = useCallback(async (mobile: string, code: string, newPassword: string) => {
+    await apiFetch('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ mobile, code, newPassword }),
+    });
   }, []);
 
   const logout = useCallback(() => {
@@ -96,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginStaff, requestOtp, verifyOtp, refresh: hydrate, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, registerPatient, requestPasswordResetOtp, confirmPasswordReset, refresh: hydrate, logout }}>
       {children}
     </AuthContext.Provider>
   );

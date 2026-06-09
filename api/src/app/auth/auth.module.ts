@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
+import { PatientsModule } from '../patients/patients.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Otp, OtpSchema } from './otp.schema';
@@ -23,6 +24,7 @@ if (isProd && (!bootstrapSecret || bootstrapSecret === 'change-me')) {
 @Module({
   imports: [
     UsersModule,
+    PatientsModule,
     PassportModule,
     MongooseModule.forFeature([{ name: Otp.name, schema: OtpSchema }]),
     JwtModule.register({
