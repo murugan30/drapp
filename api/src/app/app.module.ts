@@ -10,6 +10,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { DocumentsModule } from './documents/documents.module';
 import { MedicalRecordsModule } from './medical-records/medical-records.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MedicalRecordsModule } from './medical-records/medical-records.module';
     AvailabilityModule,
     DocumentsModule,
     MedicalRecordsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

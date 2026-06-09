@@ -6,7 +6,16 @@
     "dev": "nx run-many -t serve --projects=api,web --parallel",
     "dev:web": "nx serve web",
     "dev:api": "nx serve api",
-    "build": "nx run-many -t build --projects=api,web"
+    "build": "nx run-many -t build --projects=api,web",
+
+    "prod:up": "docker compose -f docker-compose.prod.yml up -d",
+    "prod:build": "docker compose -f docker-compose.prod.yml up -d --build",
+    "prod:restart": "docker compose -f docker-compose.prod.yml up -d --build --force-recreate",
+    "prod:down": "docker compose -f docker-compose.prod.yml down",
+    "prod:ps": "docker compose -f docker-compose.prod.yml ps",
+    "prod:logs": "docker compose -f docker-compose.prod.yml logs -f --tail=200",
+    "prod:logs:api": "docker compose -f docker-compose.prod.yml logs -f --tail=200 api",
+    "prod:logs:web": "docker compose -f docker-compose.prod.yml logs -f --tail=200 web"
   },
   "private": true,
   "devDependencies": {
