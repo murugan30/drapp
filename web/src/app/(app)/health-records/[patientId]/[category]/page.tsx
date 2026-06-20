@@ -28,6 +28,8 @@ type DownloadResponse = {
   document?: PatientDoc;
 };
 
+type TimeFilterKey = 'today' | 'yesterday' | 'last7' | 'last30' | 'last180' | 'last365' | 'all';
+
 function getDocCategory(doc: PatientDoc): CategoryKey {
   const name = (doc.fileName || '').toLowerCase();
   const mime = (doc.mimeType || '').toLowerCase();
@@ -96,6 +98,7 @@ export default function HealthRecordCategoryListPage() {
 
   const [docQuery, setDocQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'pdf' | 'image' | 'other'>('all');
+  const [timeFilter, setTimeFilter] = useState<TimeFilterKey>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name_asc' | 'size_desc'>('newest');
 
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -132,6 +135,7 @@ export default function HealthRecordCategoryListPage() {
   useEffect(() => {
     setDocQuery('');
     setTypeFilter('all');
+    setTimeFilter('all');
     setSortBy('newest');
     setPreviewOpen(false);
     setPreviewDoc(null);
@@ -259,15 +263,64 @@ export default function HealthRecordCategoryListPage() {
     ] as const;
   }, [allDocs.length, categoryCounts.imaging, categoryCounts.lab, categoryCounts.other, categoryCounts.prescriptions, categoryCounts.uploads]);
 
+  const timeFilterOptions = useMemo(() => {
+    return [
+      { key: 'today' as const, label: 'Today' },
+      { key: 'yesterday' as const, label: 'Yesterday' },
+      { key: 'last7' as const, label: 'Last 7 days' },
+      { key: 'last30' as const, label: 'Last month' },
+      { key: 'last180' as const, label: 'Last 6 months' },
+      { key: 'last365' as const, label: 'Last 1 year' },
+      { key: 'all' as const, label: 'All' },
+    ];
+  }, []);
+
+  const docTimeRange = useMemo(() => {
+    if (timeFilter === 'all') return null;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (timeFilter === 'today') {
+      return { from: startOfToday.getTime(), to: now.getTime() };
+    }
+
+    if (timeFilter === 'yesterday') {
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      return { from: startOfYesterday.getTime(), to: startOfToday.getTime() };
+    }
+
+    const days =
+      timeFilter === 'last7'
+        ? 7
+        : timeFilter === 'last30'
+          ? 30
+          : timeFilter === 'last180'
+            ? 180
+            : 365;
+
+    const from = new Date(startOfToday);
+    from.setDate(from.getDate() - (days - 1));
+    return { from: from.getTime(), to: now.getTime() };
+  }, [timeFilter]);
+
   const visibleDocs = useMemo(() => {
     const base = category === 'all'
       ? allDocs
       : allDocs.filter((x) => getDocCategory(x) === (category as CategoryKey));
 
+    const timeFiltered = docTimeRange
+      ? base.filter((d) => {
+        const t = d.createdAt ? new Date(d.createdAt).getTime() : NaN;
+        if (!Number.isFinite(t)) return false;
+        return t >= docTimeRange.from && t < docTimeRange.to;
+      })
+      : base;
+
     const q = docQuery.trim().toLowerCase();
     let out = q
-      ? base.filter((d) => (d.fileName || '').toLowerCase().includes(q))
-      : base.slice();
+      ? timeFiltered.filter((d) => (d.fileName || '').toLowerCase().includes(q))
+      : timeFiltered.slice();
 
     if (typeFilter === 'pdf') out = out.filter((d) => isPdfDoc(d));
     if (typeFilter === 'image') out = out.filter((d) => isImageDoc(d));
@@ -292,7 +345,7 @@ export default function HealthRecordCategoryListPage() {
     });
 
     return out;
-  }, [allDocs, category, docQuery, sortBy, typeFilter]);
+  }, [allDocs, category, docQuery, docTimeRange, sortBy, typeFilter]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -421,6 +474,25 @@ export default function HealthRecordCategoryListPage() {
                 >
                   <span>{c.label}</span>
                   <span className={`text-[11px] px-2 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-500'}`}>{c.count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex overflow-x-auto gap-2 pb-1 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+            {timeFilterOptions.map((opt) => {
+              const active = opt.key === timeFilter;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setTimeFilter(opt.key)}
+                  className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${active
+                    ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                    }`}
+                >
+                  {opt.label}
                 </button>
               );
             })}

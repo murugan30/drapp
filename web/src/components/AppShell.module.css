@@ -2,6 +2,7 @@
 
 .appShell {
   @apply min-h-screen md:grid md:grid-cols-[260px_1fr];
+  min-height: 100dvh;
 }
 
 .sidebar {
@@ -10,6 +11,7 @@
 
 .contentColumn {
   @apply flex flex-col min-h-screen;
+  min-height: 100dvh;
   min-width: 0;
   --shell-top-offset: 0px;
 }
@@ -176,9 +178,9 @@
 }
 
 .bottomTabsInner {
-  @apply mx-auto w-full max-w-md bg-white/90 border border-gray-200 rounded-2xl shadow-lg;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  @apply mx-auto w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-lg;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   @apply grid grid-cols-4;
 }
 
@@ -211,11 +213,26 @@
 }
 
 .drawerOverlay {
-  @apply md:hidden fixed inset-0 bg-black/40 z-50;
+  @apply md:hidden fixed inset-0 z-50;
+  background: rgba(0, 0, 0, 0.28);
 }
 
 .drawer {
-  @apply bg-slate-900 text-slate-100 h-full w-[300px] max-w-[85vw] p-6 flex flex-col gap-6;
+  @apply bg-white text-gray-900 h-full w-[300px] max-w-[85vw] p-6 flex flex-col gap-6;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 18px 0 40px -26px rgba(0, 0, 0, 0.35);
+}
+
+.drawer .navLink {
+  @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
+}
+
+.drawer .navLinkActive {
+  @apply bg-blue-50 text-[#0254b7];
+}
+
+.drawer .signOut {
+  @apply border-gray-200 text-gray-700 hover:bg-gray-50;
 }
 
 .footer {

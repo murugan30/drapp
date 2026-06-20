@@ -86,7 +86,7 @@ export default function WelcomePage() {
   };
 
   return (
-    <main className="min-h-screen relative overflow-hidden bg-gradient-to-b from-[#0254b7] via-[#0157D8] to-[#013A9C] text-white">
+    <main className="min-h-screen relative overflow-x-hidden bg-gradient-to-b from-[#0254b7] via-[#0157D8] to-[#013A9C] text-white">
       <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-28 -right-28 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
 

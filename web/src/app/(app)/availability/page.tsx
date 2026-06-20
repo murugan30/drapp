@@ -85,6 +85,11 @@ export default function AvailabilityPage() {
   const [editStart, setEditStart] = useState('09:00');
   const [editEnd, setEditEnd] = useState('10:00');
 
+  const [quickStart, setQuickStart] = useState('09:00');
+  const [quickEnd, setQuickEnd] = useState('10:00');
+
+  const [dragCreateMode, setDragCreateMode] = useState(false);
+
   const [recurring, setRecurring] = useState(false);
   const [repeatDays, setRepeatDays] = useState(7);
 
@@ -215,6 +220,22 @@ export default function AvailabilityPage() {
   const totalMinutes = calendarEndMin - calendarStartMin;
   const timelineHeight = totalMinutes * PX_PER_MIN;
 
+  const quickPreview = useMemo(() => {
+    if (pendingSlot) return null;
+    const a = timeToMinutes(quickStart);
+    const b = timeToMinutes(quickEnd);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    if (b <= a) return null;
+
+    const startMin = clamp(a, calendarStartMin, calendarEndMin);
+    const endMin = clamp(b, calendarStartMin, calendarEndMin);
+    if (endMin <= startMin) return null;
+
+    const top = (startMin - calendarStartMin) * PX_PER_MIN;
+    const height = Math.max((endMin - startMin) * PX_PER_MIN, slotStep * PX_PER_MIN);
+    return { top, height, startTime: minutesToTime(startMin), endTime: minutesToTime(endMin) };
+  }, [calendarEndMin, calendarStartMin, pendingSlot, quickEnd, quickStart, slotStep]);
+
   const snapMinute = (minute: number) => {
     const snapped = Math.round(minute / slotStep) * slotStep;
     return clamp(snapped, calendarStartMin, calendarEndMin);
@@ -319,6 +340,69 @@ export default function AvailabilityPage() {
 
   if (!canView) return null;
 
+  const openEdit = (slot: Slot, startTime: string, endTime: string) => {
+    setEditingSlotId(slot._id);
+    setEditStart(startTime);
+    setEditEnd(endTime);
+    setPendingSlot(null);
+  };
+
+  const setQuickStartAndEnsureEnd = (startTime: string) => {
+    setQuickStart(startTime);
+    const startMin = timeToMinutes(startTime);
+    const endMin = timeToMinutes(quickEnd);
+    if (endMin <= startMin) {
+      setQuickEnd(minutesToTime(clamp(startMin + slotStep, 0, 24 * 60 - slotStep)));
+    }
+  };
+
+  const setQuickEndAndEnsureAfterStart = (endTime: string) => {
+    setQuickEnd(endTime);
+    const startMin = timeToMinutes(quickStart);
+    const endMin = timeToMinutes(endTime);
+    if (endMin <= startMin) {
+      setQuickStart(minutesToTime(clamp(endMin - slotStep, 0, 24 * 60 - slotStep)));
+    }
+  };
+
+  const dragTimes = useMemo(() => {
+    if (!drag) return null;
+    const calendarStartMin = CAL_START_HOUR * 60;
+    const calendarEndMin = CAL_END_HOUR * 60;
+
+    const snap = (minute: number) => {
+      const snapped = Math.round(minute / slotStep) * slotStep;
+      return clamp(snapped, calendarStartMin, calendarEndMin);
+    };
+
+    if (drag.mode === 'create') {
+      const a = Math.min(drag.startMin, drag.currentMin);
+      const b = Math.max(drag.startMin, drag.currentMin);
+      return { startMin: snap(a), endMin: snap(b) };
+    }
+
+    if (!drag.slotId || drag.originalStartMin == null || drag.originalEndMin == null) return null;
+    const pointerDelta = drag.currentMin - drag.startMin;
+    let nextStart = drag.originalStartMin;
+    let nextEnd = drag.originalEndMin;
+
+    if (drag.mode === 'move') {
+      nextStart = snap(drag.originalStartMin + pointerDelta);
+      nextEnd = snap(drag.originalEndMin + pointerDelta);
+      const duration = drag.originalEndMin - drag.originalStartMin;
+      if (nextEnd - nextStart !== duration) {
+        nextEnd = clamp(nextStart + duration, calendarStartMin, calendarEndMin);
+      }
+    }
+
+    if (drag.mode === 'resize') {
+      nextStart = drag.originalStartMin;
+      nextEnd = clamp(snap(drag.originalEndMin + pointerDelta), nextStart + slotStep, calendarEndMin);
+    }
+
+    return { startMin: nextStart, endMin: nextEnd };
+  }, [drag, slotStep]);
+
   const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
   const firstGridDay = new Date(monthStart);
   firstGridDay.setDate(firstGridDay.getDate() - firstGridDay.getDay());
@@ -331,6 +415,17 @@ export default function AvailabilityPage() {
   const selected = new Date(`${selectedDate}T00:00:00`);
   const selectedLabel = `${weekday[selected.getDay()]} ${selectedDate}`;
 
+  const daySummary = useMemo(() => {
+    const count = daySlots.length;
+    const minutes = daySlots.reduce((sum, s) => {
+      const a = timeToMinutes(s.startTime);
+      const b = timeToMinutes(s.endTime);
+      return sum + Math.max(0, b - a);
+    }, 0);
+    const hours = Math.round((minutes / 60) * 10) / 10;
+    return { count, hours };
+  }, [daySlots]);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.topbar}>
@@ -339,6 +434,17 @@ export default function AvailabilityPage() {
           <p className={styles.textMuted}>Pick a date and add one or more availability slots.</p>
         </div>
         <div className={styles.topbarRight}>
+          <button
+            className={styles.buttonGhost}
+            type="button"
+            onClick={() => {
+              const now = new Date();
+              setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+              setSelectedDate(toDateString(now));
+            }}
+          >
+            Today
+          </button>
           <button
             className={styles.buttonGhost}
             type="button"
@@ -406,6 +512,53 @@ export default function AvailabilityPage() {
             <h3 className={styles.cardTitle}>{selectedLabel}</h3>
             <div className={styles.meta}>Slot step: {slotStep} mins</div>
           </div>
+
+          <div className={styles.summaryRow}>
+            <div className={styles.summaryChip}>
+              <span className={styles.summaryLabel}>Slots</span>
+              <span className={styles.summaryValue}>{daySummary.count}</span>
+            </div>
+            <div className={styles.summaryChip}>
+              <span className={styles.summaryLabel}>Total</span>
+              <span className={styles.summaryValue}>{daySummary.hours}h</span>
+            </div>
+          </div>
+
+          {!pendingSlot ? (
+            <div className={styles.addBox}>
+              <div className={styles.addTitle}>Add slot</div>
+              <div className={styles.addRow}>
+                <select className={styles.select} value={quickStart} onChange={(e) => setQuickStartAndEnsureEnd(e.target.value)}>
+                  {timeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.to}>to</span>
+                <select className={styles.select} value={quickEnd} onChange={(e) => setQuickEndAndEnsureAfterStart(e.target.value)}>
+                  {timeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className={styles.button}
+                  type="button"
+                  onClick={() => {
+                    const a = timeToMinutes(quickStart);
+                    const b = timeToMinutes(quickEnd);
+                    if (b - a < slotStep) return;
+                    setPendingSlot({ startTime: quickStart, endTime: quickEnd });
+                    setEditingSlotId(null);
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {pendingSlot ? (
             <div className={styles.pendingPanel}>
@@ -508,13 +661,22 @@ export default function AvailabilityPage() {
             </div>
 
             <div
-              className={styles.track}
+              className={`${styles.track} ${dragCreateMode ? styles.trackCreateMode : ''}`}
               ref={timelineRef}
               style={{ height: "100%" }}
               onPointerDown={(e) => {
                 if (e.button !== 0) return;
-                beginCreate(e.clientY);
-                (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                if (dragCreateMode) {
+                  beginCreate(e.clientY);
+                  (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                  return;
+                }
+
+                const m = minuteFromPointer(e.clientY);
+                const startTime = minutesToTime(m);
+                const endTime = minutesToTime(clamp(m + slotStep, 0, 24 * 60 - slotStep));
+                setQuickStart(startTime);
+                setQuickEnd(endTime);
               }}
               onPointerMove={(e) => {
                 if (!drag) return;
@@ -541,6 +703,15 @@ export default function AvailabilityPage() {
                   />
                 ))}
 
+                {quickPreview ? (
+                  <div
+                    className={styles.quickPreviewBlock}
+                    style={{ top: quickPreview.top, height: quickPreview.height }}
+                    aria-hidden="true"
+                    title={`${quickPreview.startTime} - ${quickPreview.endTime}`}
+                  />
+                ) : null}
+
                 {daySlots.map((s) => {
                   const preview = slotPreview[s._id];
                   const startTime = preview?.startTime || s.startTime;
@@ -553,31 +724,27 @@ export default function AvailabilityPage() {
                   return (
                     <div
                       key={s._id}
-                      className={styles.slotBlock}
+                      className={`${styles.slotBlock} ${editingSlotId === s._id ? styles.slotBlockActive : ''}`}
                       style={{ top, height }}
                       role="button"
                       tabIndex={0}
-                      onDoubleClick={() => {
-                        setEditingSlotId(s._id);
-                        setEditStart(startTime);
-                        setEditEnd(endTime);
-                      }}
-                      onPointerDown={(e) => {
-                        if (e.button !== 0) return;
-                        e.stopPropagation();
-                        startMove(s, e.clientY);
-                        (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-                      }}
+                      onClick={() => openEdit(s, startTime, endTime)}
                     >
-                      <div
-                        className={styles.slotLabel}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingSlotId(s._id);
-                          setEditStart(startTime);
-                          setEditEnd(endTime);
-                        }}
-                      >
+                      <div className={styles.slotGrip}>
+                        <div
+                          className={styles.slotGripBar}
+                          role="button"
+                          tabIndex={0}
+                          onPointerDown={(e) => {
+                            if (e.button !== 0) return;
+                            e.stopPropagation();
+                            startMove(s, e.clientY);
+                            (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                          }}
+                        />
+                      </div>
+
+                      <div className={styles.slotLabel}>
                         {startTime} - {endTime}
                       </div>
                       <div
@@ -604,11 +771,63 @@ export default function AvailabilityPage() {
                     return <div className={styles.pendingBlock} style={{ top, height }} />;
                   })()
                 ) : null}
+
+                {dragTimes ? (
+                  (() => {
+                    const top = (dragTimes.startMin - calendarStartMin) * PX_PER_MIN;
+                    return (
+                      <div className={styles.dragPill} style={{ top }}>
+                        {minutesToTime(dragTimes.startMin)} - {minutesToTime(dragTimes.endMin)}
+                      </div>
+                    );
+                  })()
+                ) : null}
               </div>
             </div>
           </div>
 
-          <div className={styles.hint}>Tip: drag on the timeline to create a slot. Double-click a slot to edit.</div>
+          <div className={styles.hintRow}>
+            <div className={styles.hint}>Tip: tap a slot to edit. Drag the small bar to move. Drag the bottom handle to resize.</div>
+            <button
+              type="button"
+              className={`${styles.buttonGhost} ${dragCreateMode ? styles.buttonGhostActive : ''}`}
+              onClick={() => setDragCreateMode((v) => !v)}
+            >
+              {dragCreateMode ? 'Drag add: ON' : 'Drag add: OFF'}
+            </button>
+          </div>
+
+          {daySlots.length === 0 ? (
+            <div className={styles.empty}>No slots added for this day.</div>
+          ) : (
+            <div className={styles.slotList}>
+              {daySlots.map((s) => (
+                <div key={s._id} className={styles.slotRow}>
+                  <div className={styles.slotTime}>
+                    {s.startTime} - {s.endTime}
+                  </div>
+                  <div className={styles.slotActions}>
+                    <button
+                      type="button"
+                      className={styles.buttonGhost}
+                      onClick={() => openEdit(s, s.startTime, s.endTime)}
+                      disabled={saving}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.buttonDanger}
+                      onClick={() => void deleteSlot(s._id)}
+                      disabled={saving}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

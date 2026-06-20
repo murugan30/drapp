@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth';
 import { apiFetch } from '../../lib/api';
 import { Logo } from '../../components/Logo';
@@ -34,11 +34,7 @@ type PatientMember = { _id: string };
 
 export default function LoginPage() {
   const router = useRouter();
-  const pathname = usePathname();
   const { login, requestPasswordResetOtp, confirmPasswordReset } = useAuth();
-  const isStaffRoute = pathname?.startsWith('/login/staff');
-
-  const [mode, setMode] = useState<'patient' | 'staff'>(isStaffRoute ? 'staff' : 'patient');
   const [otpSent, setOtpSent] = useState(false);
   const [mobile, setMobile] = useState('');
   const [otpSeconds, setOtpSeconds] = useState(60);
@@ -118,15 +114,6 @@ export default function LoginPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [otpSent]);
-
-  useEffect(() => {
-    const nextMode = isStaffRoute ? 'staff' : 'patient';
-    setMode(nextMode);
-    setOtpSent(false);
-    setDevOtp(null);
-    otpForm.setValue('otp', '');
-    otpForm.setValue('newPassword', '');
-  }, [isStaffRoute, otpForm]);
 
   if (otpSent) {
     return (
@@ -290,43 +277,15 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-[14px] text-gray-600 flex justify-center items-center gap-1.5 pt-4">
-          {mode === 'patient' ? (
-            <>
-              <span>Clinic Staff?</span>
-              <button
-                type="button"
-                className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
-                onClick={() => router.push('/login/staff')}
-              >
-                Sign In Here
-              </button>
-            </>
-          ) : (
-            <>
-              <span>Patient?</span>
-              <button
-                type="button"
-                className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
-                onClick={() => router.push('/login')}
-              >
-                Sign In Here
-              </button>
-            </>
-          )}
+        <div className="mt-8 text-center text-[14px] text-gray-600 pt-4">
+          <button
+            type="button"
+            className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
+            onClick={() => router.push('/register')}
+          >
+            New patient? Register
+          </button>
         </div>
-
-        {mode === 'patient' ? (
-          <div className="mt-4 text-center text-[14px] text-gray-600">
-            <button
-              type="button"
-              className="text-[#0254b7] font-semibold hover:underline underline-offset-2"
-              onClick={() => router.push('/register')}
-            >
-              New patient? Register
-            </button>
-          </div>
-        ) : null}
       </div>
     </main>
   );
