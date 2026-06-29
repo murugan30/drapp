@@ -383,78 +383,97 @@ export default function BookAppointmentDoctorPage() {
     }
   };
 
+  const fmt12 = (t: string) => {
+    const [h, m] = t.split(':');
+    const n = parseInt(h, 10);
+    return `${n % 12 || 12}:${m} ${n >= 12 ? 'PM' : 'AM'}`;
+  };
+
+  const fmtDate = (iso: string) => {
+    const [y, mo, d] = iso.split('-').map(Number);
+    return new Date(y, mo - 1, d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#fff] text-gray-900 pb-28 absolute inset-0 z-50">
-      {/* Top Bar - Frosted Glass */}
+    <div className="flex flex-col min-h-screen bg-[#F4F6FB] text-gray-900 pb-32 absolute inset-0 z-50">
       <TopHeader
         title="Book Appointment"
         backHref={isStaffFlow ? `/appointments/book?patientId=${encodeURIComponent(staffPatientId)}` : '/appointments/book'}
       />
 
-      <div className="flex flex-col px-6 mt-10 gap-5 flex-1">
+      <div className="flex flex-col gap-5 px-4 pt-4 flex-1">
 
-        {/* Simple Doctor Profile */}
-        <div className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
-          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#0254b7] font-bold text-xl border border-blue-100 shadow-sm shrink-0">
-            {doctorInitial}
-          </div>
-
-        {isStaffFlow ? (
-          <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
-            <div className="text-xs font-extrabold tracking-widest text-[#0254b7] uppercase">Booking for</div>
-            <div className="mt-1 text-sm font-bold text-gray-900">
-              {staffPatient?.fullName || staffPatientId || '—'}
+        {/* Doctor hero card */}
+        <div className="relative bg-gradient-to-br from-[#0254b7] to-[#0142a5] rounded-3xl p-5 shadow-lg overflow-hidden">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full" />
+          <div className="absolute -right-2 bottom-0 w-20 h-20 bg-white/5 rounded-full" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-bold text-2xl border border-white/30 shrink-0">
+              {doctorInitial}
+            </div>
+            <div>
+              <div className="text-[11px] font-bold text-blue-200 tracking-widest uppercase mb-0.5">Your Doctor</div>
+              <div className="text-xl font-bold text-white leading-tight">{doctorName}</div>
+              <div className="text-sm text-blue-200 font-medium mt-0.5">Specialist · {stepMinutes} min slots</div>
             </div>
           </div>
-        ) : null}
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-gray-900 leading-tight tracking-tight">{doctorName}</h2>
-            <div className="text-sm font-medium text-gray-500 mt-0.5">Specialist</div>
-          </div>
+          {activeMemberName ? (
+            <div className="mt-4 relative z-10 flex items-center gap-2 bg-white/10 rounded-2xl px-4 py-2.5 border border-white/20">
+              <svg className="w-4 h-4 text-blue-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span className="text-sm font-semibold text-white">{activeMemberName}</span>
+              <span className="ml-auto text-[11px] font-bold text-blue-200 bg-white/10 rounded-full px-2 py-0.5">Booking for</span>
+            </div>
+          ) : !isStaffFlow ? (
+            <div className="mt-4 relative z-10 flex items-center gap-2 bg-orange-400/20 rounded-2xl px-4 py-2.5 border border-orange-300/30">
+              <svg className="w-4 h-4 text-orange-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span className="text-sm font-medium text-orange-100">No active member — select one in Family</span>
+            </div>
+          ) : null}
         </div>
 
-        {/* Date Selection */}
-        <div className="mt-10">
-          <div className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-1">
-            Book Appointment
-          </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-3 mt-10">Day</h3>
-
-          {loadingDates ? <p className="text-sm font-medium text-gray-400">Loading available dates...</p> : null}
-          {!loadingDates && dateChoices.every((d) => !d.available) ? (
-            <p className="text-sm font-medium text-gray-400">No availability in the next 2 weeks.</p>
+        {/* Date strip */}
+        <div>
+          <div className="text-[11px] font-bold text-gray-400 tracking-widest uppercase mb-3 px-1">Select Date</div>
+          {loadingDates ? (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-[72px] h-[72px] rounded-2xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          ) : dateChoices.every((d) => !d.available) ? (
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <span className="text-sm font-medium text-gray-400">No availability in the next 2 weeks</span>
+            </div>
           ) : (
-            <div className="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 [&::-webkit-scrollbar]:hidden">
               {dateChoices.map((c) => {
                 const active = c.iso === selectedDate;
                 const disabled = !c.available;
-
-                // Formulate "4 Oct" format
-                const dObj = parseIsoDate(c.iso);
-                const dayMatchText = `${dObj.getDate()} ${dObj.toLocaleDateString(undefined, { month: 'short' })}`;
-
-                // Override dow to say "Today" if today
-                let dowText = c.dow;
-                if (c.iso === todayIso) dowText = 'Today';
-
+                const [cy, cm, cd] = c.iso.split('-').map(Number);
+                const dObj = new Date(cy, cm - 1, cd);
+                const dayNum = dObj.getDate();
+                const monStr = dObj.toLocaleDateString(undefined, { month: 'short' });
+                const dowStr = c.iso === todayIso ? 'Today' : c.dow;
                 return (
                   <button
                     key={c.iso}
                     type="button"
-                    className={`flex-shrink-0 flex flex-col items-center justify-center w-[76px] h-[56px] rounded-[14px] font-bold transition-all ${active
-                      ? 'bg-[#0254b7] text-white shadow-sm'
-                      : disabled
-                        ? 'bg-gray-50 text-gray-300 border border-gray-100'
-                        : 'bg-white text-gray-900 border border-gray-200 hover:border-blue-200'
-                      }`}
-                    onClick={() => {
-                      if (disabled) return;
-                      setSelectedDate(c.iso);
-                    }}
                     disabled={disabled}
+                    onClick={() => { if (!disabled) setSelectedDate(c.iso); }}
+                    className={`flex-shrink-0 flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl font-bold transition-all active:scale-95 ${
+                      active
+                        ? 'bg-[#0254b7] text-white shadow-md shadow-blue-200'
+                        : disabled
+                          ? 'bg-white text-gray-200 border border-gray-100'
+                          : 'bg-white text-gray-800 border border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                    }`}
                   >
-                    <span className={`text-[10px] uppercase tracking-widest ${active ? 'text-blue-100 font-medium' : disabled ? 'text-gray-300' : 'text-gray-500 font-medium'}`}>{dowText}</span>
-                    <span className="text-sm mt-0.5">{dayMatchText}</span>
+                    <span className={`text-[10px] font-bold tracking-wider uppercase ${active ? 'text-blue-200' : disabled ? 'text-gray-200' : 'text-gray-400'}`}>{dowStr}</span>
+                    <span className="text-xl font-extrabold leading-tight">{dayNum}</span>
+                    <span className={`text-[10px] font-semibold ${active ? 'text-blue-200' : disabled ? 'text-gray-200' : 'text-gray-400'}`}>{monStr}</span>
                   </button>
                 );
               })}
@@ -462,141 +481,188 @@ export default function BookAppointmentDoctorPage() {
           )}
         </div>
 
-        {/* Time Selection */}
-        <div className="mt-10">
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Time</h3>
-          {loadingSlots ? <p className="text-sm font-medium text-gray-400">Loading availability...</p> : null}
+        {/* Time groups */}
+        <div>
+          <div className="text-[11px] font-bold text-gray-400 tracking-widest uppercase mb-3 px-1">Select Time</div>
 
-          {doctorId && selectedDateAvailable && times.length === 0 && !loadingSlots ? (
-            <p className="text-sm font-medium text-gray-400">No available slots for the selected date.</p>
-          ) : doctorId && selectedDateAvailable ? (
-            <div className="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
-              {times.map((time) => {
-                const isBooked = bookedSet.has(time);
-                const isPastTime = selectedDate === todayIso && toMinutes(time) < nowMinutes;
-                const disabled = isBooked || booking || isPastTime;
-                const active = selectedTime === time;
-
-                // Format "7:00 PM"
-                const [h, m] = time.split(':');
-                const hourNum = parseInt(h, 10);
-                const ampm = hourNum >= 12 ? 'PM' : 'AM';
-                const hour12 = hourNum % 12 || 12;
-                const displayTimeStr = `${hour12}:${m} ${ampm}`;
-
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    className={`flex-shrink-0 inline-flex items-center justify-center px-5 h-10 rounded-full text-sm font-bold transition-all ${active
-                      ? 'bg-[#0254b7] text-white shadow-sm'
-                      : disabled
-                        ? 'bg-gray-50 text-gray-300 border border-gray-100'
-                        : 'bg-white text-gray-900 border border-gray-200 hover:border-blue-200'
-                      }`}
-                    disabled={disabled}
-                    onClick={() => setSelectedTime(time)}
-                    title={isBooked ? 'Booked' : isPastTime ? 'Past time' : 'Select'}
-                  >
-                    {displayTimeStr}
-                  </button>
-                );
-              })}
+          {loadingSlots ? (
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-10 rounded-xl bg-gray-100 animate-pulse" />
+              ))}
             </div>
-          ) : null}
+          ) : !selectedDateAvailable ? (
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <span className="text-sm font-medium text-gray-400">Doctor unavailable on this date</span>
+            </div>
+          ) : times.length === 0 ? (
+            <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <span className="text-sm font-medium text-gray-400">No slots available for this date</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {timeGroups.filter((g) => g.times.length > 0).map((g) => (
+                <div key={g.key}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{g.label}</span>
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-[11px] font-semibold text-gray-300">{g.times.length} slots</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {g.times.map((time) => {
+                      const isBooked = bookedSet.has(time);
+                      const isPastTime = selectedDate === todayIso && toMinutes(time) < nowMinutes;
+                      const disabled = isBooked || booking || isPastTime;
+                      const active = selectedTime === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => setSelectedTime(time)}
+                          title={isBooked ? 'Already booked' : isPastTime ? 'Past time' : ''}
+                          className={`flex flex-col items-center justify-center h-14 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
+                            active
+                              ? 'bg-[#0254b7] text-white shadow-md shadow-blue-200'
+                              : isBooked
+                                ? 'bg-gray-50 text-gray-200 border border-gray-100 line-through'
+                                : isPastTime
+                                  ? 'bg-gray-50 text-gray-200 border border-gray-100'
+                                  : 'bg-white text-gray-800 border border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                          }`}
+                        >
+                          <span className="text-sm font-extrabold leading-tight">{fmt12(time).split(' ')[0]}</span>
+                          <span className={`text-[10px] font-bold mt-0.5 ${active ? 'text-blue-200' : 'text-gray-400'}`}>{fmt12(time).split(' ')[1]}</span>
+                          {isBooked ? <span className="text-[9px] text-red-300 font-bold mt-0.5">Booked</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {bookingSuccess ? <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-800 px-4 py-3 text-sm font-semibold">{bookingSuccess}</div> : null}
-        {bookingError ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-semibold">{bookingError}</div> : null}
+
+        {bookingSuccess ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span className="text-sm font-semibold text-emerald-800">{bookingSuccess}</span>
+          </div>
+        ) : null}
+        {bookingError ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+            <svg className="w-4 h-4 text-red-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span className="text-sm font-semibold text-red-700">{bookingError}</span>
+          </div>
+        ) : null}
       </div>
 
-      {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-30 flex justify-center">
+      {/* Sticky bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-8px_32px_rgba(0,0,0,0.06)] z-30 px-4 py-4">
+        {selectedTime ? (
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <svg className="w-4 h-4 text-[#0254b7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {fmt12(selectedTime)}
+            </div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <svg className="w-4 h-4 text-[#0254b7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {fmtDate(selectedDate)}
+            </div>
+          </div>
+        ) : null}
         <button
           onClick={() => setShowConfirmation(true)}
           disabled={!canConfirm || booking}
-          className={`w-full max-w-[320px] py-2.5 rounded-2xl text-sm font-bold transition-transform active:scale-95 ${canConfirm && !booking
-            ? 'bg-[#0254b7] text-white shadow-md'
-            : 'bg-gray-100 text-gray-400 shadow-transparent'
-            }`}
+          className={`w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98] ${
+            canConfirm && !booking
+              ? 'bg-[#0254b7] text-white shadow-lg shadow-blue-200'
+              : 'bg-gray-100 text-gray-300'
+          }`}
         >
-          {booking ? 'Booking...' : 'Make Appointment'}
+          {booking ? 'Booking…' : canConfirm ? 'Confirm Appointment' : 'Select a date & time'}
         </button>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation bottom sheet */}
       {showConfirmation && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[#0254b7] mb-4 mx-auto">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                <line x1="16" x2="16" y1="2" y2="6" />
-                <line x1="8" x2="8" y1="2" y2="6" />
-                <line x1="3" x2="21" y1="10" y2="10" />
-                <path d="M8 14h.01" />
-                <path d="M12 14h.01" />
-                <path d="M16 14h.01" />
-              </svg>
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowConfirmation(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#0254b7]">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div>
+                <div className="text-lg font-bold text-gray-900">Confirm Appointment</div>
+                <div className="text-sm text-gray-400 font-medium">Review your booking details</div>
+              </div>
             </div>
 
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">Confirm Appointment</h3>
-
             {hasSameDayAppt && (
-              <div className="bg-orange-50 rounded-xl p-3 mb-2 mt-4 border border-orange-100">
-                <span className="text-[13px] font-medium text-orange-800 leading-snug block text-center">
-                  You already have an appointment scheduled for this date. Are you sure you want to book another?
-                </span>
+              <div className="flex items-start gap-2.5 bg-orange-50 rounded-2xl p-3.5 mb-4 border border-orange-100">
+                <svg className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span className="text-[13px] font-medium text-orange-700 leading-snug">You already have an appointment on this date. Booking another?</span>
               </div>
             )}
 
-            <div className="bg-gray-50 rounded-2xl p-4 mb-6 mt-4">
-              <div className="flex justify-between items-center mb-3">
+            <div className="bg-gray-50 rounded-2xl divide-y divide-gray-100 mb-6 overflow-hidden">
+              <div className="flex justify-between items-center px-4 py-3.5">
                 <span className="text-sm font-medium text-gray-500">Doctor</span>
                 <span className="text-sm font-bold text-gray-900">{doctorName}</span>
               </div>
-              <div className="flex justify-between items-center mb-3">
+              {activeMemberName && (
+                <div className="flex justify-between items-center px-4 py-3.5">
+                  <span className="text-sm font-medium text-gray-500">Patient</span>
+                  <span className="text-sm font-bold text-gray-900">{activeMemberName}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center px-4 py-3.5">
                 <span className="text-sm font-medium text-gray-500">Date</span>
-                <span className="text-sm font-bold text-gray-900">
-                  {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
+                <span className="text-sm font-bold text-gray-900">{fmtDate(selectedDate)}</span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center px-4 py-3.5">
                 <span className="text-sm font-medium text-gray-500">Time</span>
-                <span className="text-sm font-bold text-[#0254b7]">
-                  {(() => {
-                    if (!selectedTime) return '';
-                    const [h, m] = selectedTime.split(':');
-                    const hourNum = parseInt(h, 10);
-                    return `${hourNum % 12 || 12}:${m} ${hourNum >= 12 ? 'PM' : 'AM'}`;
-                  })()}
-                </span>
+                <span className="text-sm font-bold text-[#0254b7]">{selectedTime ? fmt12(selectedTime) : '—'}</span>
               </div>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirmation(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                 disabled={booking}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#0254b7] text-white shadow-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
                 disabled={booking}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold bg-[#0254b7] text-white shadow-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
               >
                 {booking ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
-                    Booking...
+                    Booking…
                   </>
-                ) : (
-                  'Confirm'
-                )}
+                ) : 'Confirm Booking'}
               </button>
             </div>
           </div>

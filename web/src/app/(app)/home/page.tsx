@@ -147,9 +147,9 @@ export default function HomePage() {
   }, [appointments, now]);
 
   return (
-    <div className="-mx-6 md:-mx-8 bg-[#F9FAFB] min-h-[calc(100vh-var(--shell-top-offset))] pb-12">
+    <div className="-mx-6 md:-mx-8 min-h-[calc(100vh-var(--shell-top-offset))] pb-12">
       {/* Dynamic Native-Feel Header */}
-      <div className="bg-white px-6 md:px-8 pt-8 pb-10 rounded-b-[2.5rem] shadow-[0_4px_24px_rgba(0,0,0,0.02)] mb-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="px-6 md:px-8 pt-2 pb-10 rounded-b-[2.5rem] mb-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[13px] font-bold text-[#0254b7] tracking-widest uppercase flex items-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

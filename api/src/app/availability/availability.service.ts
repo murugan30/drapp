@@ -93,15 +93,18 @@ export class AvailabilityService {
   }
 
   private expandDates(start: string, days: number) {
-    const base = new Date(`${start}T00:00:00`);
-    if (Number.isNaN(base.getTime())) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(start);
+    if (!match) {
       throw new BadRequestException('Invalid date');
     }
+    const [, y, m, day] = match.map(Number);
     const result: string[] = [];
     for (let i = 0; i < days; i++) {
-      const d = new Date(base);
-      d.setDate(d.getDate() + i);
-      result.push(d.toISOString().slice(0, 10));
+      const d = new Date(y, m - 1, day + i);
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      result.push(`${yy}-${mm}-${dd}`);
     }
     return result;
   }

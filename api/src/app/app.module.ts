@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -11,10 +12,12 @@ import { AvailabilityModule } from './availability/availability.module';
 import { DocumentsModule } from './documents/documents.module';
 import { MedicalRecordsModule } from './medical-records/medical-records.module';
 import { SeedModule } from './seed/seed.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://localhost:27017/drapp'),
     AuthModule,
     UsersModule,
@@ -24,6 +27,7 @@ import { SeedModule } from './seed/seed.module';
     DocumentsModule,
     MedicalRecordsModule,
     SeedModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

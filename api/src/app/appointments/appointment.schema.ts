@@ -18,7 +18,7 @@ export class Appointment {
   scheduledAt!: Date;
 
   @Prop({ default: 'scheduled' })
-  status!: 'scheduled' | 'cancelled' | 'completed';
+  status!: 'scheduled' | 'cancelled' | 'completed' | 'expired';
 
   @Prop()
   notes?: string;

@@ -161,4 +161,20 @@ export class AppointmentsService {
     await appt.save();
     return appt;
   }
+
+  async markExpiredAppointments(): Promise<number> {
+    const now = new Date();
+    const result = await this.appointmentModel.updateMany(
+      {
+        scheduledAt: { $lt: now },
+        $or: [
+          { status: 'scheduled' },
+          { status: { $exists: false } },
+          { status: null },
+        ],
+      },
+      { $set: { status: 'expired' } },
+    );
+    return result.modifiedCount;
+  }
 }

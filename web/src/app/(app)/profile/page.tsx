@@ -61,8 +61,8 @@ export default function ProfilePage() {
   if (user.role !== 'patient') return null;
 
   return (
-    <div className="-mx-6 md:-mx-8 bg-[#F9FAFB] min-h-[calc(100vh-var(--shell-top-offset))] pb-28">
-      <div className="bg-white px-6 md:px-8 pt-8 pb-8 rounded-b-[2.5rem] shadow-[0_4px_24px_rgba(0,0,0,0.02)] mb-6 relative z-10">
+    <div className="-mx-6 md:-mx-8 min-h-[calc(100vh-var(--shell-top-offset))] pb-28">
+      <div className="px-6 md:px-8 pt-8 pb-8 rounded-b-[2.5rem] mb-6 relative z-10">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[13px] font-bold text-[#0254b7] tracking-widest uppercase">My Profile</div>
