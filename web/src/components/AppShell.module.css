@@ -3,10 +3,48 @@
 .appShell {
   @apply min-h-screen md:grid md:grid-cols-[260px_1fr];
   min-height: 100dvh;
+  @apply relative overflow-x-hidden bg-slate-50;
+}
+
+.shellBg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1300px circle at 18% -10%, rgba(148, 163, 184, 0.10), rgba(148, 163, 184, 0) 62%),
+    radial-gradient(1100px circle at 85% 8%, rgba(148, 163, 184, 0.06), rgba(148, 163, 184, 0) 64%),
+    linear-gradient(180deg, #ffffff 0%, #ffffff 55%, #f8fafc 100%);
+}
+
+.shellBg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='%239ca3af' stroke-opacity='0.32' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 52c10 0 18 8 18 18v14c0 9 7 16 16 16s16-7 16-16V52'/%3E%3Ccircle cx='48' cy='52' r='9'/%3E%3Ccircle cx='98' cy='52' r='9'/%3E%3Cpath d='M98 52v22'/%3E%3Cpath d='M168 46l18 18'/%3E%3Cpath d='M177 46l9 9-9 9'/%3E%3Cpath d='M156 92h30'/%3E%3Cpath d='M171 77v30'/%3E%3Cpath d='M54 176h18'/%3E%3Cpath d='M63 167v18'/%3E%3Cpath d='M150 164c0-6 5-11 11-11h30c6 0 11 5 11 11v5h-52z'/%3E%3Cpath d='M161 158v-12c0-6 5-11 11-11s11 5 11 11v12'/%3E%3Cpath d='M186 198h-14'/%3E%3Cpath d='M179 198v-9'/%3E%3Cpath d='M178 116c0 6-5 11-11 11s-11-5-11-11 5-11 11-11 11 5 11 11z'/%3E%3Cpath d='M62 120c0-6 5-11 11-11h26c6 0 11 5 11 11v44c0 6-5 11-11 11H73c-6 0-11-5-11-11z'/%3E%3Cpath d='M79 109v-10c0-5 4-9 9-9s9 4 9 9v10'/%3E%3Cpath d='M74 140h30'/%3E%3Cpath d='M74 156h30'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  opacity: 0.3;
+}
+
+.shellBg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 20% 10%, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0) 62%);
+  opacity: 0.06;
 }
 
 .sidebar {
-  @apply hidden md:flex bg-slate-900 text-slate-100 p-6 flex-col gap-6;
+  @apply hidden md:flex bg-white text-gray-900 flex-col gap-6;
+  position: relative;
+  z-index: 10;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 18px 0 40px -26px rgba(0, 0, 0, 0.08);
+  padding: 24px 16px;
 }
 
 .contentColumn {
@@ -14,10 +52,12 @@
   min-height: 100dvh;
   min-width: 0;
   --shell-top-offset: 0px;
+  position: relative;
+  z-index: 10;
 }
 
 .mobileHeader {
-  @apply md:hidden flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200;
+  @apply md:hidden flex items-center justify-between px-6 py-4;
   position: fixed;
   top: 0;
   left: 0;
@@ -30,18 +70,40 @@
   max-width: 100vw;
 }
 
+.shellLeft {
+  @apply flex items-center justify-start;
+  width: 40px;
+  flex: 0 0 40px;
+}
+
+.shellRight {
+  @apply flex items-center justify-end;
+  width: 40px;
+  flex: 0 0 40px;
+}
+
+.shellTitle {
+  @apply flex-1 flex items-center justify-center;
+  min-width: 0;
+}
+
+.shellTitleText {
+  @apply text-[15px] font-bold text-gray-900 truncate;
+  min-width: 0;
+}
+
 .menuButton {
-  @apply inline-flex items-center justify-center h-10 w-10 rounded-xl border border-gray-200 bg-white;
+  @apply inline-flex items-center justify-center h-10 w-10 rounded-xl;
 }
 
 .menuIcon {
-  @apply block h-0.5 w-5 bg-gray-900 relative;
+  @apply block h-0.5 w-5 bg-[#0254b7] relative;
 }
 
 .menuIcon::before,
 .menuIcon::after {
   content: '';
-  @apply absolute left-0 h-0.5 w-5 bg-gray-900;
+  @apply absolute left-0 h-0.5 w-5 bg-[#0254b7];
 }
 
 .menuIcon::before {
@@ -76,6 +138,18 @@
   max-width: 100vw;
 }
 
+.desktopHeader {
+  @apply hidden md:flex items-center justify-center bg-white border-b border-gray-100;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.desktopHeaderTitle {
+  @apply text-base font-bold text-gray-900;
+}
+
 .patientBrand {
   @apply flex items-center gap-3;
   flex: 1 1 auto;
@@ -107,7 +181,7 @@
 }
 
 .brand {
-  @apply flex items-center gap-3 font-semibold text-lg;
+  @apply flex items-center gap-3 px-2;
 }
 
 .logo {
@@ -115,15 +189,32 @@
 }
 
 .nav {
-  @apply flex flex-col gap-3;
+  @apply flex flex-col gap-1;
 }
 
 .navLink {
-  @apply px-3 py-2 rounded-xl text-slate-300 transition-colors hover:bg-blue-500/20 hover:text-white;
+  @apply flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-600 transition-all hover:bg-gray-50 hover:text-gray-900;
 }
 
 .navLinkActive {
-  @apply bg-blue-500/20 text-white;
+  @apply bg-[#f0f5ff] text-[#0254b7];
+  position: relative;
+}
+
+.navLinkActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background: #0254b7;
+  border-radius: 0 4px 4px 0;
+}
+
+.navIcon {
+  @apply w-5 h-5 flex-shrink-0;
 }
 
 .main {
@@ -218,27 +309,63 @@
 }
 
 .drawer {
-  @apply bg-white text-gray-900 h-full w-[300px] max-w-[85vw] p-6 flex flex-col gap-6;
+  @apply bg-white text-gray-900 h-full w-[300px] max-w-[85vw] flex flex-col;
   border-right: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 18px 0 40px -26px rgba(0, 0, 0, 0.35);
 }
 
+.drawerHeader {
+  @apply flex items-center justify-between px-6 pt-6 pb-4;
+}
+
+.drawerBody {
+  @apply flex flex-col gap-6 px-6 pb-6 flex-1 overflow-y-auto;
+}
+
+.drawerClose {
+  @apply w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 transition-all;
+}
+
 .drawer .navLink {
-  @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
+  @apply text-gray-600 hover:bg-gray-50 hover:text-gray-900;
 }
 
 .drawer .navLinkActive {
-  @apply bg-blue-50 text-[#0254b7];
+  @apply bg-[#f0f5ff] text-[#0254b7];
 }
 
 .drawer .signOut {
   @apply border-gray-200 text-gray-700 hover:bg-gray-50;
 }
 
+.userInfo {
+  @apply flex items-center gap-3 px-3 py-3 rounded-2xl bg-gray-50 border border-gray-100;
+}
+
+.userAvatar {
+  @apply w-10 h-10 rounded-full bg-[#0254b7] text-white flex items-center justify-center font-bold text-sm flex-shrink-0;
+}
+
+.userMeta {
+  @apply flex flex-col min-w-0;
+}
+
+.userName {
+  @apply text-sm font-bold text-gray-900 truncate;
+}
+
+.userRole {
+  @apply text-xs font-medium text-gray-500 capitalize;
+}
+
 .footer {
-  @apply mt-auto flex flex-col gap-4;
+  @apply mt-auto flex flex-col gap-3 px-2;
 }
 
 .signOut {
-  @apply w-full border border-slate-700 text-slate-200 rounded-lg py-2 text-sm hover:bg-slate-800;
+  @apply w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors;
+}
+
+.signOutIcon {
+  @apply w-4 h-4;
 }

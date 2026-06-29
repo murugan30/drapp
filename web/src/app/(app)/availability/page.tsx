@@ -345,6 +345,11 @@ export default function AvailabilityPage() {
     setEditStart(startTime);
     setEditEnd(endTime);
     setPendingSlot(null);
+
+    queueMicrotask(() => {
+      const el = document.getElementById(`slot-row-${slot._id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   };
 
   const setQuickStartAndEnsureEnd = (startTime: string) => {
@@ -362,6 +367,24 @@ export default function AvailabilityPage() {
     const endMin = timeToMinutes(endTime);
     if (endMin <= startMin) {
       setQuickStart(minutesToTime(clamp(endMin - slotStep, 0, 24 * 60 - slotStep)));
+    }
+  };
+
+  const setEditStartAndEnsureEnd = (startTime: string) => {
+    setEditStart(startTime);
+    const startMin = timeToMinutes(startTime);
+    const endMin = timeToMinutes(editEnd);
+    if (endMin <= startMin) {
+      setEditEnd(minutesToTime(clamp(startMin + slotStep, 0, 24 * 60 - slotStep)));
+    }
+  };
+
+  const setEditEndAndEnsureAfterStart = (endTime: string) => {
+    setEditEnd(endTime);
+    const startMin = timeToMinutes(editStart);
+    const endMin = timeToMinutes(endTime);
+    if (endMin <= startMin) {
+      setEditStart(minutesToTime(clamp(endMin - slotStep, 0, 24 * 60 - slotStep)));
     }
   };
 
@@ -428,41 +451,35 @@ export default function AvailabilityPage() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.topbar}>
-        <div>
-          <h2>{t('availability')}</h2>
-          <p className={styles.textMuted}>Pick a date and add one or more availability slots.</p>
+      <div className={styles.headerActionsRow}>
+        <button
+          className={styles.buttonGhost}
+          type="button"
+          onClick={() => {
+            const now = new Date();
+            setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+            setSelectedDate(toDateString(now));
+          }}
+        >
+          Today
+        </button>
+        <button
+          className={styles.buttonGhost}
+          type="button"
+          onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+        >
+          Prev
+        </button>
+        <div className={styles.monthTitle}>
+          {month.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
         </div>
-        <div className={styles.topbarRight}>
-          <button
-            className={styles.buttonGhost}
-            type="button"
-            onClick={() => {
-              const now = new Date();
-              setMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-              setSelectedDate(toDateString(now));
-            }}
-          >
-            Today
-          </button>
-          <button
-            className={styles.buttonGhost}
-            type="button"
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-          >
-            Prev
-          </button>
-          <div className={styles.monthTitle}>
-            {month.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
-          </div>
-          <button
-            className={styles.buttonGhost}
-            type="button"
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-          >
-            Next
-          </button>
-        </div>
+        <button
+          className={styles.buttonGhost}
+          type="button"
+          onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+        >
+          Next
+        </button>
       </div>
 
       {error ? <div className={styles.error}>{error}</div> : null}
@@ -597,53 +614,6 @@ export default function AvailabilityPage() {
                     <span className={styles.textMuted}>days</span>
                   </div>
                 ) : null}
-              </div>
-            </div>
-          ) : null}
-
-          {editingSlotId ? (
-            <div className={styles.editPanel}>
-              <div className={styles.pendingTitle}>Edit slot</div>
-              <div className={styles.pendingRow}>
-                <select className={styles.select} value={editStart} onChange={(e) => setEditStart(e.target.value)}>
-                  {timeOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <span className={styles.to}>to</span>
-                <select className={styles.select} value={editEnd} onChange={(e) => setEditEnd(e.target.value)}>
-                  {timeOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  className={styles.button}
-                  type="button"
-                  onClick={() => updateSlot(editingSlotId, editStart, editEnd)}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving…' : 'Save'}
-                </button>
-                <button
-                  className={styles.buttonDanger}
-                  type="button"
-                  onClick={() => deleteSlot(editingSlotId)}
-                  disabled={saving}
-                >
-                  Delete
-                </button>
-                <button
-                  className={styles.buttonGhost}
-                  type="button"
-                  onClick={() => setEditingSlotId(null)}
-                  disabled={saving}
-                >
-                  Close
-                </button>
               </div>
             </div>
           ) : null}
@@ -802,28 +772,88 @@ export default function AvailabilityPage() {
           ) : (
             <div className={styles.slotList}>
               {daySlots.map((s) => (
-                <div key={s._id} className={styles.slotRow}>
+                <div
+                  key={s._id}
+                  id={`slot-row-${s._id}`}
+                  className={`${styles.slotRow} ${editingSlotId === s._id ? styles.slotRowActive : ''}`}
+                >
                   <div className={styles.slotTime}>
                     {s.startTime} - {s.endTime}
                   </div>
-                  <div className={styles.slotActions}>
-                    <button
-                      type="button"
-                      className={styles.buttonGhost}
-                      onClick={() => openEdit(s, s.startTime, s.endTime)}
-                      disabled={saving}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.buttonDanger}
-                      onClick={() => void deleteSlot(s._id)}
-                      disabled={saving}
-                    >
-                      Delete
-                    </button>
-                  </div>
+
+                  {editingSlotId === s._id ? (
+                    <div className={styles.slotEdit}>
+                      <select
+                        className={styles.select}
+                        value={editStart}
+                        onChange={(e) => setEditStartAndEnsureEnd(e.target.value)}
+                        disabled={saving}
+                      >
+                        {timeOptions.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                      <span className={styles.to}>to</span>
+                      <select
+                        className={styles.select}
+                        value={editEnd}
+                        onChange={(e) => setEditEndAndEnsureAfterStart(e.target.value)}
+                        disabled={saving}
+                      >
+                        {timeOptions.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        className={styles.button}
+                        type="button"
+                        onClick={() => updateSlot(s._id, editStart, editEnd)}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        className={styles.buttonGhost}
+                        type="button"
+                        onClick={() => setEditingSlotId(null)}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className={styles.buttonDanger}
+                        type="button"
+                        onClick={() => void deleteSlot(s._id)}
+                        disabled={saving}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.slotActions}>
+                      <button
+                        type="button"
+                        className={styles.buttonGhost}
+                        onClick={() => openEdit(s, s.startTime, s.endTime)}
+                        disabled={saving}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.buttonDanger}
+                        onClick={() => void deleteSlot(s._id)}
+                        disabled={saving}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

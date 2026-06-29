@@ -117,13 +117,6 @@ export default function StaffPage() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.topbar}>
-        <div>
-          <h2>{t('staff')}</h2>
-          <p className={styles.textMuted}>Add clinic staff and manage access.</p>
-        </div>
-      </div>
-
       <div className={styles.tabs}>
         <button
           className={`${styles.tab} ${tab === 'doctor' ? styles.tabActive : ''}`}

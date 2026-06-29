@@ -29,7 +29,11 @@ type CreateMemberPayload = {
 
 type CreateStaffPatientPayload = CreateMemberPayload & {
   mobile: string;
+  password?: string;
+  confirmPassword?: string;
 };
+
+type MobileCheckState = 'idle' | 'checking' | 'existing' | 'new';
 
 export default function PatientsPage() {
   const t = useTranslations();
@@ -55,6 +59,12 @@ export default function PatientsPage() {
   const [staffError, setStaffError] = useState<string | null>(null);
   const [staffMobile, setStaffMobile] = useState('');
   const [staffPatients, setStaffPatients] = useState<Patient[]>([]);
+  const [staffListLoading, setStaffListLoading] = useState(false);
+  const [staffSearch, setStaffSearch] = useState('');
+  const [staffTotal, setStaffTotal] = useState(0);
+  const [staffPage, setStaffPage] = useState(1);
+  const staffLimit = 20;
+  const [mobileCheckState, setMobileCheckState] = useState<MobileCheckState>('idle');
   const [staffForm, setStaffForm] = useState<CreateStaffPatientPayload>({
     mobile: '',
     fullName: '',
@@ -63,12 +73,32 @@ export default function PatientsPage() {
     gender: 'male',
     phone: '',
     notes: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const loadMine = async () => {
     const res = await cachedFetch<Patient[]>('patients-my', '/patients/my');
     setPatients(res.data || []);
     setOffline(res.offline);
+  };
+
+  const loadStaffPatients = async (search: string, page: number) => {
+    setStaffListLoading(true);
+    try {
+      const qs = new URLSearchParams();
+      qs.set('page', String(page));
+      qs.set('limit', String(staffLimit));
+      if (search.trim()) qs.set('q', search.trim());
+      const res = await apiFetch<{ items: Patient[]; total: number; page: number }>(`/patients?${qs.toString()}`);
+      setStaffPatients(res?.items || []);
+      setStaffTotal(Number(res?.total || 0));
+      setStaffPage(Number(res?.page || page));
+    } catch {
+      setStaffPatients([]);
+    } finally {
+      setStaffListLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -90,7 +120,7 @@ export default function PatientsPage() {
       if (user.role === 'patient') {
         await loadMine();
       } else {
-        setPatients([]);
+        await loadStaffPatients('', 1);
       }
     };
     load();
@@ -142,6 +172,24 @@ export default function PatientsPage() {
     }
   };
 
+  const handleMobileCheck = async () => {
+    if (!user || user.role === 'patient') return;
+    const mobile = staffForm.mobile.trim();
+    if (!mobile) return;
+    setMobileCheckState('checking');
+    setStaffError(null);
+    try {
+      const res = await apiFetch<Patient[]>(`/patients/by-mobile?mobile=${encodeURIComponent(mobile)}`);
+      if (res && res.length > 0) {
+        setMobileCheckState('existing');
+      } else {
+        setMobileCheckState('new');
+      }
+    } catch {
+      setMobileCheckState('new');
+    }
+  };
+
   const handleStaffCreate = async () => {
     if (!user || user.role === 'patient') return;
     if (staffBusy) return;
@@ -151,26 +199,57 @@ export default function PatientsPage() {
     setStaffBusy(true);
     setStaffError(null);
     try {
-      const created = await apiFetch<any>('/patients/by-mobile', {
-        method: 'POST',
-        body: JSON.stringify({
-          mobile,
-          fullName,
-          relationship: staffForm.relationship?.trim() ? staffForm.relationship.trim() : undefined,
-          dob: staffForm.dob?.trim() ? staffForm.dob.trim() : undefined,
-          gender: staffForm.gender,
-          phone: staffForm.phone?.trim() ? staffForm.phone.trim() : undefined,
-          notes: staffForm.notes?.trim() ? staffForm.notes.trim() : undefined,
-        }),
-      });
-      const id = created?._id as string | undefined;
+      let id: string | undefined;
+
+      if (mobileCheckState === 'new') {
+        const password = staffForm.password?.trim() || '';
+        if (password.length < 6) {
+          setStaffError('Password must be at least 6 characters');
+          setStaffBusy(false);
+          return;
+        }
+        if (password !== (staffForm.confirmPassword?.trim() || '')) {
+          setStaffError('Passwords do not match');
+          setStaffBusy(false);
+          return;
+        }
+        const res = await apiFetch<any>('/auth/patient/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            mobile,
+            password,
+            fullName,
+            relationship: staffForm.relationship?.trim() ? staffForm.relationship.trim() : undefined,
+            dob: staffForm.dob?.trim() ? staffForm.dob.trim() : undefined,
+            gender: staffForm.gender,
+            phone: staffForm.phone?.trim() ? staffForm.phone.trim() : undefined,
+            notes: staffForm.notes?.trim() ? staffForm.notes.trim() : undefined,
+          }),
+        });
+        id = res?.user?._id as string | undefined;
+      } else {
+        const created = await apiFetch<any>('/patients/by-mobile', {
+          method: 'POST',
+          body: JSON.stringify({
+            mobile,
+            fullName,
+            relationship: staffForm.relationship?.trim() ? staffForm.relationship.trim() : undefined,
+            dob: staffForm.dob?.trim() ? staffForm.dob.trim() : undefined,
+            gender: staffForm.gender,
+            phone: staffForm.phone?.trim() ? staffForm.phone.trim() : undefined,
+            notes: staffForm.notes?.trim() ? staffForm.notes.trim() : undefined,
+          }),
+        });
+        id = created?._id as string | undefined;
+      }
+
       if (id) {
         router.push(`/patients/${id}`);
       } else {
-        setStaffError('Patient created but ID missing');
+        setStaffError('Patient saved but ID missing');
       }
     } catch (e: any) {
-      setStaffError(e?.message || 'Failed to create patient');
+      setStaffError(e?.message || 'Failed to save patient');
     } finally {
       setStaffBusy(false);
     }
@@ -191,8 +270,8 @@ export default function PatientsPage() {
               onClick={() => {
                 setStaffShowAdd((v) => !v);
                 setStaffError(null);
-                setStaffPatients([]);
                 setStaffMobile('');
+                setMobileCheckState('idle');
                 setStaffForm({
                   mobile: '',
                   fullName: '',
@@ -201,6 +280,8 @@ export default function PatientsPage() {
                   gender: 'male',
                   phone: '',
                   notes: '',
+                  password: '',
+                  confirmPassword: '',
                 });
               }}
             >
@@ -212,18 +293,45 @@ export default function PatientsPage() {
 
 
 
+      {user?.role !== 'patient' ? (
+        <div className={styles.searchRow}>
+          <input
+            className={styles.searchInput}
+            placeholder="Search by name or phone…"
+            value={staffSearch}
+            onChange={(e) => setStaffSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void loadStaffPatients(staffSearch, 1);
+            }}
+          />
+          <button
+            className={styles.buttonGhost}
+            onClick={() => void loadStaffPatients(staffSearch, 1)}
+            disabled={staffListLoading}
+            type="button"
+          >
+            {staffListLoading ? '…' : 'Search'}
+          </button>
+        </div>
+      ) : null}
+
       <div className={styles.gridTwo}>
-        {user?.role !== 'patient' && staffPatients.length > 0 ? (
-          staffPatients.map((patient) => (
-            <Link key={patient._id} href={`/patients/${patient._id}`} className={styles.card}>
-              <h3>{patient.fullName}</h3>
-              <p>{patient.relationship || 'Patient'}</p>
-              <p className={styles.textMuted}>{patient.phone}</p>
-            </Link>
-          ))
+        {user?.role !== 'patient' ? (
+          staffListLoading ? (
+            <div className={styles.card}><p>Loading patients…</p></div>
+          ) : staffPatients.length === 0 ? (
+            <div className={styles.card}><p>No patients found.</p></div>
+          ) : (
+            staffPatients.map((patient) => (
+              <Link key={patient._id} href={`/patients/${patient._id}`} className={styles.card}>
+                <h3>{patient.fullName}</h3>
+                <p className={styles.textMuted}>{patient.phone || '—'}</p>
+              </Link>
+            ))
+          )
         ) : patients.length === 0 ? (
           <div className={styles.card}>
-            <p>{user?.role === 'patient' ? 'No members yet. Add a family member to get started.' : 'No patients loaded.'}</p>
+            <p>No members yet. Add a family member to get started.</p>
           </div>
         ) : (
           patients.map((patient) => {
@@ -391,112 +499,186 @@ export default function PatientsPage() {
 
       <BottomDrawer
         isOpen={staffShowAdd && user?.role !== 'patient'}
-        onClose={() => setStaffShowAdd(false)}
+        onClose={() => {
+          setStaffShowAdd(false);
+          setMobileCheckState('idle');
+        }}
         title={t('addPatient')}
       >
         <div className="pt-2">
           {staffError ? <div className={styles.error + ' mb-4'}>{staffError}</div> : null}
+
+          {/* Step 1: Enter mobile and check */}
           <div className={styles.formGrid}>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Mobile *</label>
-              <input
-                className={styles.input}
-                placeholder="Mobile"
-                value={staffForm.mobile}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, mobile: e.target.value }))}
-                inputMode="numeric"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Full Name *</label>
-              <input
-                className={styles.input}
-                placeholder="Full name"
-                value={staffForm.fullName}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, fullName: e.target.value }))}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Date of Birth</label>
-              <input
-                className={styles.input}
-                type="date"
-                value={staffForm.dob || ''}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, dob: e.target.value }))}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Gender</label>
-              <select
-                className={styles.input}
-                value={staffForm.gender || 'male'}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, gender: e.target.value as any }))}
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Relationship</label>
-              <input
-                className={styles.input}
-                placeholder="Relationship (optional)"
-                value={staffForm.relationship || ''}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, relationship: e.target.value }))}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Phone</label>
-              <input
-                className={styles.input}
-                placeholder="Phone (optional)"
-                value={staffForm.phone || ''}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, phone: e.target.value }))}
-                inputMode="tel"
-              />
-            </div>
             <div className="flex flex-col gap-1.5 w-full md:col-span-2">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Medical Notes</label>
-              <textarea
-                className={styles.textarea}
-                placeholder="Notes (optional)"
-                value={staffForm.notes || ''}
-                onChange={(e) => setStaffForm((prev) => ({ ...prev, notes: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div className={styles.actionRow + ' mt-8 mb-4'}>
-            <button className={styles.buttonGhost + ' flex-1'} onClick={() => setStaffShowAdd(false)} disabled={staffBusy}>
-              Cancel
-            </button>
-            <button
-              className={styles.button + ' flex-1 py-3'}
-              onClick={handleStaffCreate}
-              disabled={staffBusy || staffForm.mobile.trim().length === 0 || staffForm.fullName.trim().length === 0}
-            >
-              {staffBusy ? 'Saving...' : 'Save Patient'}
-            </button>
-          </div>
-
-          <div className={styles.formGrid + ' mt-8 pt-6 border-t border-gray-100'}>
-            <div className="flex flex-col gap-1.5 w-full">
-              <label className="text-xs font-semibold text-gray-700 ml-1">Or Find Existing</label>
+              <label className="text-xs font-semibold text-gray-700 ml-1">Mobile Number *</label>
               <div className="flex items-center gap-2">
                 <input
                   className={styles.input + ' flex-1'}
-                  placeholder="Find by mobile"
-                  value={staffMobile}
-                  onChange={(e) => setStaffMobile(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  value={staffForm.mobile}
+                  onChange={(e) => {
+                    setStaffForm((prev) => ({ ...prev, mobile: e.target.value }));
+                    setMobileCheckState('idle');
+                    setStaffError(null);
+                  }}
                   inputMode="numeric"
+                  disabled={mobileCheckState !== 'idle'}
                 />
-                <button className={styles.buttonGhost + ' h-[38px]'} onClick={handleStaffFind} disabled={staffBusy || staffMobile.trim().length === 0}>
-                  {staffBusy ? '...' : 'Find'}
-                </button>
+                {mobileCheckState === 'idle' ? (
+                  <button
+                    className={styles.button + ' h-[42px] px-4 whitespace-nowrap'}
+                    onClick={handleMobileCheck}
+                    disabled={staffForm.mobile.trim().length === 0}
+                    type="button"
+                  >
+                    Check
+                  </button>
+                ) : (
+                  <button
+                    className={styles.buttonGhost + ' h-[42px] px-4 whitespace-nowrap'}
+                    onClick={() => {
+                      setMobileCheckState('idle');
+                      setStaffError(null);
+                    }}
+                    type="button"
+                  >
+                    Change
+                  </button>
+                )}
               </div>
             </div>
           </div>
+
+          {mobileCheckState === 'checking' ? (
+            <p className="text-sm text-gray-500 mt-4">Checking mobile number…</p>
+          ) : null}
+
+          {mobileCheckState === 'existing' ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+              <svg className="h-4 w-4 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              <p className="text-sm font-semibold text-green-700">Mobile already registered. This patient will be added as a member.</p>
+            </div>
+          ) : null}
+
+          {mobileCheckState === 'new' ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+              <svg className="h-4 w-4 text-[#0254b7] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+              <p className="text-sm font-semibold text-[#0254b7]">New mobile. A new patient account will be created. Please set a password.</p>
+            </div>
+          ) : null}
+
+          {/* Step 2: Show form fields after mobile check */}
+          {(mobileCheckState === 'existing' || mobileCheckState === 'new') ? (
+            <div className={styles.formGrid + ' mt-4'}>
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-gray-700 ml-1">Full Name *</label>
+                <input
+                  className={styles.input}
+                  placeholder="Full name"
+                  value={staffForm.fullName}
+                  onChange={(e) => setStaffForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-gray-700 ml-1">Gender</label>
+                <select
+                  className={styles.input}
+                  value={staffForm.gender || 'male'}
+                  onChange={(e) => setStaffForm((prev) => ({ ...prev, gender: e.target.value as any }))}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-gray-700 ml-1">Date of Birth</label>
+                <input
+                  className={styles.input}
+                  type="date"
+                  value={staffForm.dob || ''}
+                  onChange={(e) => setStaffForm((prev) => ({ ...prev, dob: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-semibold text-gray-700 ml-1">Phone</label>
+                <input
+                  className={styles.input}
+                  placeholder="Phone (optional)"
+                  value={staffForm.phone || ''}
+                  onChange={(e) => setStaffForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  inputMode="tel"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 w-full md:col-span-2">
+                <label className="text-xs font-semibold text-gray-700 ml-1">Medical Notes</label>
+                <textarea
+                  className={styles.textarea}
+                  placeholder="Notes (optional)"
+                  value={staffForm.notes || ''}
+                  onChange={(e) => setStaffForm((prev) => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+
+              {mobileCheckState === 'new' ? (
+                <>
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <label className="text-xs font-semibold text-gray-700 ml-1">Password *</label>
+                    <input
+                      className={styles.input}
+                      type="password"
+                      placeholder="Min 6 characters"
+                      value={staffForm.password || ''}
+                      onChange={(e) => setStaffForm((prev) => ({ ...prev, password: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <label className="text-xs font-semibold text-gray-700 ml-1">Confirm Password *</label>
+                    <input
+                      className={styles.input}
+                      type="password"
+                      placeholder="Repeat password"
+                      value={staffForm.confirmPassword || ''}
+                      onChange={(e) => setStaffForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                    />
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
+          {(mobileCheckState === 'existing' || mobileCheckState === 'new') ? (
+            <div className={styles.actionRow + ' mt-8 mb-4'}>
+              <button
+                className={styles.buttonGhost + ' flex-1'}
+                onClick={() => {
+                  setStaffShowAdd(false);
+                  setMobileCheckState('idle');
+                }}
+                disabled={staffBusy}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.button + ' flex-1 py-3'}
+                onClick={handleStaffCreate}
+                disabled={
+                  staffBusy ||
+                  staffForm.fullName.trim().length === 0 ||
+                  (mobileCheckState === 'new' && (staffForm.password || '').trim().length < 6)
+                }
+              >
+                {staffBusy ? 'Saving...' : mobileCheckState === 'new' ? 'Register Patient' : 'Add Patient'}
+              </button>
+            </div>
+          ) : null}
         </div>
       </BottomDrawer>
     </div>

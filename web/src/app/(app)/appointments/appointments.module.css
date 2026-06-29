@@ -2,6 +2,8 @@
 
 .wrapper {
   @apply flex flex-col gap-6;
+  @apply max-w-full;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -12,6 +14,28 @@
   top: var(--shell-top-offset, 0px);
   z-index: 50;
   background: white;
+}
+
+.headerActionsRow {
+  @apply flex items-center justify-between gap-3 flex-wrap;
+}
+
+.assistantCtaBar {
+  @apply mt-2 flex items-center justify-between gap-3 rounded-2xl bg-white/70 backdrop-blur px-4 py-3;
+  @apply ring-1 ring-slate-200/70;
+}
+
+.assistantCtaText {
+  @apply text-xs font-semibold text-gray-600;
+}
+
+.assistantCtaButton {
+  @apply inline-flex items-center justify-center rounded-2xl bg-[#0254b7] text-white px-4 py-2 text-xs font-semibold;
+  @apply shadow-[0_18px_40px_-26px_rgba(2,84,183,0.8)] hover:bg-[#0142A5] transition-colors;
+}
+
+.headerActionsRight {
+  @apply flex items-center gap-2;
 }
 
 .headerBar {
@@ -32,12 +56,9 @@
   transform: rotate(45deg);
 }
 
-.card {
-  @apply bg-white border border-gray-200 rounded-2xl p-5;
-}
-
 .grid {
   @apply grid gap-5;
+  @apply min-w-0 max-w-full;
 }
 
 .button {
@@ -67,6 +88,37 @@
   @apply relative overflow-hidden flex flex-col items-stretch gap-5 rounded-3xl bg-gradient-to-br from-[#0254b7] to-[#0142A5] p-6 sm:p-8;
   @apply sm:flex-row sm:items-center sm:justify-between;
   box-shadow: 0 12px 32px -8px rgba(1, 101, 252, 0.4);
+  @apply max-w-full;
+}
+
+.bookingHeaderRight {
+  @apply relative flex flex-col items-stretch gap-2;
+  @apply sm:flex-row sm:items-center;
+  @apply min-w-0;
+}
+
+.offlineTag {
+  @apply mt-3 inline-flex items-center rounded-full bg-white/15 text-white px-3 py-1 text-[11px] font-semibold w-fit;
+}
+
+.selectHeader {
+  @apply bg-white/90 backdrop-blur border border-white/30 rounded-2xl px-3 py-2 text-sm outline-none;
+  @apply w-full sm:w-[220px];
+}
+
+.bookingHeaderCta {
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-[#0254b7] px-4 py-2 text-xs font-bold;
+  @apply shadow-[0_18px_44px_-26px_rgba(0,0,0,0.35)] hover:shadow-[0_22px_56px_-32px_rgba(0,0,0,0.38)];
+  @apply transition-shadow;
+  @apply w-full sm:w-auto;
+}
+
+.bookingHeaderCtaIcon {
+  @apply inline-flex items-center justify-center h-8 w-8 rounded-2xl bg-blue-50 text-[#0254b7];
+}
+
+.bookingHeaderCtaIcon svg {
+  @apply h-4 w-4;
 }
 
 .bookingHeader::before {
@@ -211,10 +263,7 @@
 
 .dateBar {
   @apply mt-4;
-}
-
-.dateNav {
-  @apply inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-gray-200 bg-white text-gray-900;
+  @apply min-w-0 max-w-full;
 }
 
 .dateStrip {
@@ -230,9 +279,6 @@
   @apply opacity-60 bg-gray-50;
 }
 
-.dateChipMeta {
-  @apply mt-1 text-[10px] font-semibold text-gray-500;
-}
 
 .dateChipActive {
   @apply border-blue-300 bg-blue-50;
@@ -244,6 +290,55 @@
 
 .dateChipDay {
   @apply text-sm font-semibold text-gray-900;
+}
+
+.actionsMenu {
+  @apply relative;
+}
+
+.actionsMenu[open] .kebabBtn {
+  @apply ring-2 ring-[#0254b7]/15;
+}
+
+.kebabBtn {
+  @apply list-none;
+  @apply inline-flex items-center justify-center h-9 w-9 rounded-2xl border border-slate-200 bg-white text-slate-700;
+  @apply hover:bg-slate-50 transition-colors;
+}
+
+.kebabBtn::-webkit-details-marker {
+  display: none;
+}
+
+.kebabBtn::marker {
+  content: '';
+}
+
+.kebabBtn svg {
+  @apply h-5 w-5;
+}
+
+.menu {
+  @apply absolute right-0 bottom-[calc(100%+8px)] z-20;
+  @apply w-44 max-w-[80vw] rounded-2xl bg-white/95 backdrop-blur;
+  @apply ring-1 ring-slate-200/80 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.35)];
+  @apply p-1;
+  @apply max-h-[60vh] overflow-y-auto overscroll-contain;
+}
+
+.menuItem {
+  @apply w-full text-left block;
+  @apply px-3 py-2 rounded-xl;
+  @apply text-sm font-semibold text-slate-700;
+  @apply hover:bg-slate-50 transition-colors;
+}
+
+.menuItem:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.menuItemDanger {
+  @apply text-red-700 hover:bg-red-50;
 }
 
 .timeGroups {
@@ -336,11 +431,29 @@
 .apptCard {
   @apply flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm;
   @apply md:grid md:grid-cols-[78px_1fr_auto] md:items-center md:gap-3;
+  @apply max-w-full;
+}
+
+.staffApptCard {
+  @apply border-0 bg-white/70 backdrop-blur;
+  @apply ring-1 ring-slate-200/70;
+  @apply md:grid-cols-[96px_1fr_auto];
+  @apply transition-transform duration-200;
+  @apply px-5 py-4;
+}
+
+.staffApptCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 50px -40px rgba(15, 23, 42, 0.35);
 }
 
 .apptTimeCol {
   @apply flex items-baseline justify-between;
   @apply md:block md:text-center;
+}
+
+.staffApptCard .apptTimeCol {
+  @apply md:rounded-2xl md:bg-slate-50 md:ring-1 md:ring-slate-200/70 md:px-3 md:py-2;
 }
 
 .apptTime {
@@ -356,7 +469,7 @@
 }
 
 .apptDoctor {
-  @apply font-semibold text-gray-900;
+  @apply font-semibold text-gray-900 truncate;
 }
 
 .apptMember {
@@ -365,6 +478,11 @@
 
 .apptRight {
   @apply flex items-center gap-2 flex-wrap justify-end;
+}
+
+.staffApptCard .apptRight {
+  @apply md:gap-2;
+  @apply flex-nowrap;
 }
 
 .statusDot {

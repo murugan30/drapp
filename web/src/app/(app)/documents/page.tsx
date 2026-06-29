@@ -133,21 +133,19 @@ export default function DocumentsPage() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.topbar}>
-        <div>
-          <h2>{t('documents')}</h2>
-          <p>Upload and manage patient reports securely.</p>
-        </div>
-        <div className={styles.topbarRight}>
-          {!isPatient ? (
-            <input
-              className={styles.input}
-              value={patientId}
-              onChange={(e) => setPatientId(e.target.value)}
-              placeholder="Patient ID"
-              inputMode="text"
-            />
-          ) : null}
+      <div className={styles.headerActionsRow}>
+        {!isPatient ? (
+          <input
+            className={styles.input}
+            value={patientId}
+            onChange={(e) => setPatientId(e.target.value)}
+            placeholder="Patient ID"
+            inputMode="text"
+          />
+        ) : (
+          <span />
+        )}
+        <div className={styles.headerActionsRight}>
           <button className={styles.button} onClick={handlePickFile} disabled={busy || !effectivePatientId}>
             {busy ? 'Uploading…' : 'Upload report'}
           </button>

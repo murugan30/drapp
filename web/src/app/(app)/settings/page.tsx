@@ -37,12 +37,6 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.topbar}>
-        <div>
-          <h2>{t('settings')}</h2>
-          <p>Profile and clinic preferences.</p>
-        </div>
-      </div>
       <div className={styles.gridTwo}>
         <div className={styles.card}>
           <h3>Profile</h3>

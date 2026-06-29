@@ -79,6 +79,7 @@ export default function HealthRecordsPage() {
 
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'with_phone' | 'no_phone'>('all');
   const [patientSort, setPatientSort] = useState<'name_asc' | 'name_desc'>('name_asc');
+  const [directoryFiltersOpen, setDirectoryFiltersOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -166,6 +167,15 @@ export default function HealthRecordsPage() {
     void loadPatients({ nextPage: 1, reset: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStaff]);
+
+  useEffect(() => {
+    if (!directoryFiltersOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDirectoryFiltersOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [directoryFiltersOpen]);
 
   const visiblePatients = useMemo(() => {
     let out = patients.slice();
@@ -319,36 +329,74 @@ export default function HealthRecordsPage() {
           </>
         ) : isStaff ? (
           <div className="flex flex-col gap-5 mt-2">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                </svg>
+            {/* Stats Hero */}
+            <div className="rounded-3xl bg-gradient-to-br from-[#0254b7] to-[#4a90e2] p-5 text-white shadow-lg shadow-blue-500/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold tracking-tight">{totalPatients}</div>
+                  <div className="text-sm font-medium text-white/80">Total Patients</div>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <input
-                  className="w-full bg-white border border-gray-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7] shadow-sm transition-all"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      void loadPatients({ nextPage: 1, reset: true });
-                    }
-                  }}
-                  placeholder="Search by name or mobile"
-                />
+              <div className="mt-3 text-xs font-medium text-white/70">
+                {visiblePatients.length} shown with current filters
+              </div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="rounded-3xl bg-white/70 ring-1 ring-slate-200/70 backdrop-blur p-3">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                  </div>
+                  <input
+                    className="w-full bg-white border border-gray-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7] shadow-sm transition-all"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void loadPatients({ nextPage: 1, reset: true });
+                      }
+                    }}
+                    placeholder="Search by name or mobile"
+                  />
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => void loadPatients({ nextPage: 1, reset: true })}
-                  disabled={searching}
-                  className="shrink-0 rounded-2xl bg-[#0254b7] px-5 py-3 text-sm font-bold text-white disabled:opacity-60 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                  onClick={() => setDirectoryFiltersOpen(true)}
+                  className="shrink-0 h-11 w-11 rounded-2xl bg-[#f0f5ff] text-[#0254b7] border border-blue-100/60 flex items-center justify-center active:scale-95 transition-transform"
+                  aria-label="Open filters"
                 >
-                  {searching ? 'Wait…' : 'Search'}
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M7 12h10" />
+                    <path d="M10 18h4" />
+                  </svg>
                 </button>
+
+                <select
+                  value={patientSort}
+                  onChange={(e) => setPatientSort(e.target.value as any)}
+                  className="shrink-0 bg-white border border-gray-200 rounded-2xl px-3 h-11 text-xs font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7]"
+                  aria-label="Sort patients"
+                >
+                  <option value="name_asc">Sort: A-Z</option>
+                  <option value="name_desc">Sort: Z-A</option>
+                </select>
               </div>
-              <div className="mt-3 flex items-center justify-between px-1">
-                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Showing {patients.length} of {totalPatients || '—'}</div>
+
+              <div className="mt-3 flex items-center justify-between">
+                <div className="text-xs font-semibold text-gray-600">
+                  {searching ? 'Loading…' : `${visiblePatients.length} of ${totalPatients || '—'} patients`}
+                </div>
                 {query.length > 0 && (
                   <button
                     type="button"
@@ -364,53 +412,119 @@ export default function HealthRecordsPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPhoneFilter('all')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${phoneFilter === 'all'
-                      ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                      }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhoneFilter('with_phone')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${phoneFilter === 'with_phone'
-                      ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                      }`}
-                  >
-                    With phone
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhoneFilter('no_phone')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${phoneFilter === 'no_phone'
-                      ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                      }`}
-                  >
-                    Missing phone
-                  </button>
-                </div>
-
-                <select
-                  value={patientSort}
-                  onChange={(e) => setPatientSort(e.target.value as any)}
-                  className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7]"
-                  aria-label="Sort patients"
+            {/* Directory Filters Bottom Sheet */}
+            {directoryFiltersOpen ? (
+              <div
+                className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+                onClick={() => setDirectoryFiltersOpen(false)}
+              >
+                <div
+                  className="w-full sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <option value="name_asc">Sort: A-Z</option>
-                  <option value="name_desc">Sort: Z-A</option>
-                </select>
-              </div>
-            </div>
+                  <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-gray-900">Filters</div>
+                      <div className="text-xs font-medium text-gray-500">Refine patient list</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-600 font-bold active:scale-95 transition-transform"
+                      onClick={() => setDirectoryFiltersOpen(false)}
+                      aria-label="Close filters"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
+                  <div className="px-5 py-5 flex flex-col gap-5">
+                    <div>
+                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Phone</div>
+                      <div className="mt-3 flex overflow-x-auto gap-2 pb-2 -mx-5 px-5 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+                        <button
+                          type="button"
+                          onClick={() => setPhoneFilter('all')}
+                          className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${phoneFilter === 'all'
+                            ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                            }`}
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPhoneFilter('with_phone')}
+                          className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${phoneFilter === 'with_phone'
+                            ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                            }`}
+                        >
+                          With phone
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPhoneFilter('no_phone')}
+                          className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${phoneFilter === 'no_phone'
+                            ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                            }`}
+                        >
+                          Missing phone
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Sort</div>
+                      <div className="mt-3 inline-flex items-center gap-1 rounded-2xl bg-gray-50 border border-gray-200 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setPatientSort('name_asc')}
+                          className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${patientSort === 'name_asc'
+                            ? 'bg-[#0254b7] text-white'
+                            : 'bg-transparent text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                          A-Z
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPatientSort('name_desc')}
+                          className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${patientSort === 'name_desc'
+                            ? 'bg-[#0254b7] text-white'
+                            : 'bg-transparent text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                          Z-A
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhoneFilter('all');
+                        setPatientSort('name_asc');
+                      }}
+                      className="text-sm font-bold text-gray-600 hover:text-gray-900"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDirectoryFiltersOpen(false)}
+                      className="rounded-2xl bg-[#0254b7] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Patient List */}
             <div className="flex flex-col gap-3">
               {visiblePatients.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-8 flex flex-col items-center justify-center text-center gap-3">
@@ -427,9 +541,9 @@ export default function HealthRecordsPage() {
                   {visiblePatients.map((p) => {
                     const initial = (p.fullName?.trim?.()?.[0] || 'P').toUpperCase();
                     return (
-                      <Link key={p._id} href={`/health-records/${p._id}/all`} className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-4 flex flex-col gap-3 hover:border-blue-200 transition-all active:scale-[0.98]">
-                        <div className="flex gap-3 items-center">
-                          <div className="w-12 h-12 bg-gray-50 rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-gray-400 text-lg group-hover:bg-[#0254b7] group-hover:text-white transition-colors duration-300">
+                      <div key={p._id} className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-4 flex flex-col gap-3 hover:border-blue-200 transition-all">
+                        <div className="flex gap-3 items-start">
+                          <div className="w-12 h-12 bg-[#f0f5ff] rounded-2xl flex-shrink-0 flex items-center justify-center font-bold text-[#0254b7] text-lg">
                             {initial}
                           </div>
                           <div className="flex flex-col gap-1 flex-1 min-w-0">
@@ -439,11 +553,19 @@ export default function HealthRecordsPage() {
                               <span className="truncate">{p.phone || 'No phone'}</span>
                             </div>
                           </div>
-                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#f0f5ff] group-hover:text-[#0254b7] transition-colors">
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                          </div>
                         </div>
-                      </Link>
+
+                        <div className="h-px bg-gray-50" />
+
+                        <div className="flex gap-3">
+                          <Link
+                            href={`/health-records/${p._id}/all`}
+                            className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#f0f5ff] text-[#0254b7] hover:bg-blue-100 transition-colors text-center active:scale-95"
+                          >
+                            View Records
+                          </Link>
+                        </div>
+                      </div>
                     )
                   })}
 

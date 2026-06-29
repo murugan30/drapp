@@ -100,6 +100,7 @@ export default function HealthRecordCategoryListPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'pdf' | 'image' | 'other'>('all');
   const [timeFilter, setTimeFilter] = useState<TimeFilterKey>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name_asc' | 'size_desc'>('newest');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<PatientDoc | null>(null);
@@ -137,6 +138,7 @@ export default function HealthRecordCategoryListPage() {
     setTypeFilter('all');
     setTimeFilter('all');
     setSortBy('newest');
+    setFiltersOpen(false);
     setPreviewOpen(false);
     setPreviewDoc(null);
     setPreviewUrl((prev) => {
@@ -146,6 +148,15 @@ export default function HealthRecordCategoryListPage() {
     setPreviewLoading(false);
     setPreviewError(null);
   }, [category, patientId]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltersOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [filtersOpen]);
 
   useEffect(() => {
     return () => {
@@ -444,9 +455,6 @@ export default function HealthRecordCategoryListPage() {
 
       <div className="flex flex-col px-6 pt-6 pb-2 gap-6 flex-1">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 leading-tight tracking-tight">
-            {headerTitle}
-          </h2>
           <p className="mt-1 text-sm font-medium text-gray-500">
             {patient?.fullName}
           </p>
@@ -456,125 +464,208 @@ export default function HealthRecordCategoryListPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50/50 px-4 py-3 text-sm font-semibold text-red-700 backdrop-blur-sm">{error}</div>
         ) : null}
 
-        <div className="flex flex-col gap-3">
-          <div className="flex overflow-x-auto gap-2 pb-1 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
-            {categoryKeys.map((c) => {
-              const active = String(c.key) === String(category);
-              return (
+        <div className="rounded-3xl bg-white/70 ring-1 ring-slate-200/70 backdrop-blur p-3">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </div>
+              <input
+                className="w-full bg-white border border-gray-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7] shadow-sm transition-all"
+                value={docQuery}
+                onChange={(e) => setDocQuery(e.target.value)}
+                placeholder="Search files"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              className="shrink-0 h-11 w-11 rounded-2xl bg-[#f0f5ff] text-[#0254b7] border border-blue-100/60 flex items-center justify-center active:scale-95 transition-transform"
+              aria-label="Open filters"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M7 12h10" />
+                <path d="M10 18h4" />
+              </svg>
+            </button>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="shrink-0 bg-white border border-gray-200 rounded-2xl px-3 h-11 text-xs font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7]"
+              aria-label="Sort documents"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="name_asc">Name</option>
+              <option value="size_desc">Size</option>
+            </select>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between">
+            <div className="text-xs font-semibold text-gray-600">{loading ? 'Loading…' : `${visibleDocs.length} items`}</div>
+            <button
+              type="button"
+              onClick={() => {
+                setTimeFilter('all');
+                setTypeFilter('all');
+              }}
+              className="text-xs font-bold text-[#0254b7] hover:text-blue-700"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        {filtersOpen ? (
+          <div
+            className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+            onClick={() => setFiltersOpen(false)}
+          >
+            <div
+              className="w-full sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-bold text-gray-900">Filters</div>
+                  <div className="text-xs font-medium text-gray-500">Refine what you see</div>
+                </div>
                 <button
-                  key={c.key}
+                  type="button"
+                  className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-600 font-bold active:scale-95 transition-transform"
+                  onClick={() => setFiltersOpen(false)}
+                  aria-label="Close filters"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="px-5 py-5 flex flex-col gap-5">
+                <div>
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Category</div>
+                  <div className="mt-3 flex overflow-x-auto gap-2 pb-2 -mx-5 px-5 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+                    {categoryKeys.map((c) => {
+                      const active = String(c.key) === String(category);
+                      return (
+                        <button
+                          key={c.key}
+                          type="button"
+                          onClick={() => {
+                            router.push(`/health-records/${patientId}/${c.key}`);
+                            setFiltersOpen(false);
+                          }}
+                          className={`flex-shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-full text-xs font-bold transition-all ${active
+                            ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                            }`}
+                        >
+                          <span>{c.label}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-500'}`}>{c.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Date</div>
+                  <div className="mt-3 flex overflow-x-auto gap-2 pb-2 -mx-5 px-5 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+                    {timeFilterOptions.map((opt) => {
+                      const active = opt.key === timeFilter;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setTimeFilter(opt.key)}
+                          className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${active
+                            ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
+                            }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Type</div>
+                  <div className="mt-3 inline-flex items-center gap-1 rounded-2xl bg-gray-50 border border-gray-200 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setTypeFilter('all')}
+                      className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${typeFilter === 'all'
+                        ? 'bg-[#0254b7] text-white'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTypeFilter('pdf')}
+                      className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${typeFilter === 'pdf'
+                        ? 'bg-[#0254b7] text-white'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTypeFilter('image')}
+                      className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${typeFilter === 'image'
+                        ? 'bg-[#0254b7] text-white'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      Images
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTypeFilter('other')}
+                      className={`px-4 h-9 rounded-xl text-xs font-bold transition-colors ${typeFilter === 'other'
+                        ? 'bg-[#0254b7] text-white'
+                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                        }`}
+                    >
+                      Other
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                <button
                   type="button"
                   onClick={() => {
-                    router.push(`/health-records/${patientId}/${c.key}`);
+                    setTimeFilter('all');
+                    setTypeFilter('all');
                   }}
-                  className={`flex-shrink-0 inline-flex items-center gap-2 px-4 h-9 rounded-full text-xs font-bold transition-all ${active
-                    ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
-                    }`}
+                  className="text-sm font-bold text-gray-600 hover:text-gray-900"
                 >
-                  <span>{c.label}</span>
-                  <span className={`text-[11px] px-2 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-500'}`}>{c.count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex overflow-x-auto gap-2 pb-1 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
-            {timeFilterOptions.map((opt) => {
-              const active = opt.key === timeFilter;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setTimeFilter(opt.key)}
-                  className={`flex-shrink-0 inline-flex items-center px-4 h-9 rounded-full text-xs font-bold transition-all ${active
-                    ? 'bg-[#0254b7] text-white shadow-md shadow-blue-500/20'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-200'
-                    }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                  </svg>
-                </div>
-                <input
-                  className="w-full bg-white border border-gray-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7] shadow-sm transition-all"
-                  value={docQuery}
-                  onChange={(e) => setDocQuery(e.target.value)}
-                  placeholder="Search files"
-                />
-              </div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="shrink-0 bg-white border border-gray-200 rounded-2xl px-3 py-3 text-xs font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0254b7]/20 focus:border-[#0254b7]"
-                aria-label="Sort documents"
-              >
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="name_asc">Name</option>
-                <option value="size_desc">Size</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('all')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${typeFilter === 'all'
-                    ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                    }`}
-                >
-                  All
+                  Clear
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTypeFilter('pdf')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${typeFilter === 'pdf'
-                    ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                    }`}
+                  onClick={() => setFiltersOpen(false)}
+                  className="rounded-2xl bg-[#0254b7] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 active:scale-95 transition-transform"
                 >
-                  PDF
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('image')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${typeFilter === 'image'
-                    ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                    }`}
-                >
-                  Images
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('other')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${typeFilter === 'other'
-                    ? 'bg-[#0254b7] text-white border-[#0254b7]'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200'
-                    }`}
-                >
-                  Other
+                  Done
                 </button>
               </div>
-
-              <div className="text-xs font-semibold text-gray-600">{loading ? 'Loading…' : `${visibleDocs.length} items`}</div>
             </div>
           </div>
+        ) : null}
 
-          <div className="mt-3 grid gap-3">
+        <div className="mt-3 grid gap-3">
             {visibleDocs.length === 0 && !loading ? (
               <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-5 py-6">
                 <div className="text-sm font-semibold text-gray-900">No files</div>
@@ -636,7 +727,6 @@ export default function HealthRecordCategoryListPage() {
               );
             })}
           </div>
-        </div>
       </div>
 
      {previewOpen ? (
@@ -677,19 +767,21 @@ export default function HealthRecordCategoryListPage() {
                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                  </svg>
                </div>
-             ) : previewDoc && previewUrl && isImageDoc(previewDoc) ? (
-               <div className="h-[55vh] rounded-2xl border border-gray-100 bg-white overflow-hidden flex items-center justify-center">
-                 <img src={previewUrl} alt={previewDoc.fileName} className="max-h-full max-w-full object-contain" />
-               </div>
-             ) : previewDoc && previewUrl && isPdfDoc(previewDoc) ? (
-               <div className="h-[55vh] rounded-2xl border border-gray-100 bg-white overflow-hidden">
-                 <iframe title={previewDoc.fileName} src={previewUrl} className="w-full h-full" />
-               </div>
              ) : previewDoc ? (
-               <div className="h-[55vh] rounded-2xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2 text-center px-6">
-                 <div className="text-sm font-bold text-gray-900">Preview not available</div>
-                 <div className="text-xs font-medium text-gray-500">This file type can be downloaded or opened in a new tab.</div>
-               </div>
+               previewUrl && isImageDoc(previewDoc) ? (
+                 <div className="h-[55vh] rounded-2xl border border-gray-100 bg-white overflow-hidden flex items-center justify-center">
+                   <img src={previewUrl ?? undefined} alt={previewDoc.fileName} className="max-h-full max-w-full object-contain" />
+                 </div>
+               ) : previewUrl && isPdfDoc(previewDoc) ? (
+                 <div className="h-[55vh] rounded-2xl border border-gray-100 bg-white overflow-hidden">
+                   <iframe title={previewDoc.fileName} src={previewUrl ?? undefined} className="w-full h-full" />
+                 </div>
+               ) : (
+                 <div className="h-[55vh] rounded-2xl border border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-2 text-center px-6">
+                   <div className="text-sm font-bold text-gray-900">Preview not available</div>
+                   <div className="text-xs font-medium text-gray-500">This file type can be downloaded or opened in a new tab.</div>
+                 </div>
+               )
              ) : null}
 
              <div className="mt-4 flex gap-3">

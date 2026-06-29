@@ -1,8 +1,17 @@
 @reference "tailwindcss";
+
 .switcher {
-  @apply inline-flex gap-1 border border-gray-200 rounded-full p-1 bg-white;
+  @apply inline-flex items-center gap-1 border border-gray-200 rounded-full p-1 bg-white shadow-sm;
+}
+
+.switcherIcon {
+  @apply w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 flex-shrink-0;
 }
 
 .chip {
-  @apply text-xs px-3 py-1 rounded-full text-gray-600 hover:bg-blue-50 hover:text-[#0254b7];
+  @apply text-xs font-semibold px-3 py-1.5 rounded-full text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900;
+}
+
+.chipActive {
+  @apply bg-[#0254b7] text-white shadow-sm hover:bg-[#0254b7] hover:text-white;
 }

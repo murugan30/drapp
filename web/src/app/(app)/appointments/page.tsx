@@ -116,6 +116,33 @@ export default function AppointmentsPage() {
     void refreshStaffAppts();
   }, [staffDate, staffDoctorId, user]);
 
+  useEffect(() => {
+    const closeAllMenus = () => {
+      const openMenus = document.querySelectorAll('details[data-actions-menu="true"][open]');
+      openMenus.forEach((el) => {
+        (el as HTMLDetailsElement).open = false;
+      });
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('details[data-actions-menu="true"]')) return;
+      closeAllMenus();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeAllMenus();
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
   const handleStaffCancel = async (id: string) => {
     if (!user) return;
     if (user.role !== 'doctor' && user.role !== 'admin') return;
@@ -258,21 +285,14 @@ export default function AppointmentsPage() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.topbar}>
-        <div>
-          <h2>{t('appointments')}</h2>
-          {offline ? <p className={styles.textMuted}>{t('offline')}</p> : null}
-        </div>
-        {user?.role === 'admin' || user?.role === 'assistant' ? (
-          <Link className={styles.button} href="/appointments/staff-book">
+      {user?.role === 'assistant' ? (
+        <div className={styles.assistantCtaBar}>
+          <div className={styles.assistantCtaText}>{offline ? t('offline') : 'Quick action'}</div>
+          <Link className={styles.assistantCtaButton} href="/appointments/staff-book">
             Book for patient
           </Link>
-        ) : user?.role === 'doctor' ? (
-          <button className={styles.button} disabled>
-            {t('schedule')}
-          </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {user?.role === 'patient' ? (
         <>
@@ -396,24 +416,7 @@ export default function AppointmentsPage() {
           </div>
         </>
       ) : (
-        <>
-          <div className={styles.controls}>
-            {user?.role === 'admin' ? (
-              <select
-                className={styles.select}
-                value={staffDoctorId}
-                onChange={(e) => setStaffDoctorId(e.target.value)}
-              >
-                <option value="">Select doctor</option>
-                {staffDoctors.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            ) : null}
-          </div>
-        </>
+        <></>
       )}
 
       <div className={styles.grid}>
@@ -423,21 +426,36 @@ export default function AppointmentsPage() {
               <div>
                 <div className={styles.bookingTitle}>Bookings</div>
                 <div className={styles.bookingSub}>Select date to view appointments</div>
+                {offline ? <div className={styles.offlineTag}>{t('offline')}</div> : null}
               </div>
-              {user?.role === 'admin' ? (
-                <select
-                  className={styles.select}
-                  value={staffDoctorId}
-                  onChange={(e) => setStaffDoctorId(e.target.value)}
-                >
-                  <option value="">Select doctor</option>
-                  {staffDoctors.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
+              <div className={styles.bookingHeaderRight}>
+                {user?.role === 'admin' ? (
+                  <select
+                    className={styles.selectHeader}
+                    value={staffDoctorId}
+                    onChange={(e) => setStaffDoctorId(e.target.value)}
+                  >
+                    <option value="">Select doctor</option>
+                    {staffDoctors.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+
+                {user?.role === 'admin' ? (
+                  <Link className={styles.bookingHeaderCta} href="/appointments/staff-book">
+                    <span className={styles.bookingHeaderCtaIcon} aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                      </svg>
+                    </span>
+                    Book for patient
+                  </Link>
+                ) : null}
+              </div>
             </div>
 
             <div className={styles.dateBar}>
@@ -486,7 +504,7 @@ export default function AppointmentsPage() {
                   const canAct = status === 'scheduled';
                   const busy = staffBusyId === appt._id;
                   return (
-                    <div key={appt._id} className={styles.apptCard}>
+                    <div key={appt._id} className={`${styles.apptCard} ${styles.staffApptCard}`}>
                       <div className={styles.apptTimeCol}>
                         <div className={styles.apptTime}>{timeLabel}</div>
                         <div className={styles.apptDateSmall}>{staffDate}</div>
@@ -497,29 +515,70 @@ export default function AppointmentsPage() {
                       </div>
                       <div className={styles.apptRight}>
                         <span className={statusClass}>{formatStatusLabel(status)}</span>
-                        <Link className={styles.actionBtn} href={`/patients/${appt.patientId}?appointmentId=${appt._id}`}>
-                          View profile
-                        </Link>
-                        {canAct ? (
-                          <>
-                            <button
-                              type="button"
-                              className={styles.actionBtn}
-                              disabled={busy}
-                              onClick={() => void handleStaffComplete(appt._id)}
+                        <details
+                          className={styles.actionsMenu}
+                          data-actions-menu="true"
+                          onToggle={(e) => {
+                            const current = e.currentTarget;
+                            if (!current.open) return;
+                            const openMenus = document.querySelectorAll('details[data-actions-menu="true"][open]');
+                            openMenus.forEach((el) => {
+                              if (el !== current) (el as HTMLDetailsElement).open = false;
+                            });
+                          }}
+                        >
+                          <summary className={styles.kebabBtn} aria-label="Appointment actions">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <circle cx="12" cy="5" r="1.8" />
+                              <circle cx="12" cy="12" r="1.8" />
+                              <circle cx="12" cy="19" r="1.8" />
+                            </svg>
+                          </summary>
+
+                          <div className={styles.menu} role="menu">
+                            <Link
+                              role="menuitem"
+                              className={styles.menuItem}
+                              href={`/health-records/${appt.patientId}/all`}
+                              onClick={(e) => {
+                                const root = (e.currentTarget as HTMLElement).closest('details');
+                                if (root) (root as HTMLDetailsElement).open = false;
+                              }}
                             >
-                              {busy ? 'Working…' : 'Complete'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.cancelBtn}
-                              disabled={busy}
-                              onClick={() => void handleStaffCancel(appt._id)}
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : null}
+                              View record
+                            </Link>
+                            {canAct ? (
+                              <>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className={styles.menuItem}
+                                  disabled={busy}
+                                  onClick={(e) => {
+                                    const root = (e.currentTarget as HTMLElement).closest('details');
+                                    if (root) (root as HTMLDetailsElement).open = false;
+                                    void handleStaffComplete(appt._id);
+                                  }}
+                                >
+                                  {busy ? 'Working…' : 'Complete'}
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                  disabled={busy}
+                                  onClick={(e) => {
+                                    const root = (e.currentTarget as HTMLElement).closest('details');
+                                    if (root) (root as HTMLDetailsElement).open = false;
+                                    void handleStaffCancel(appt._id);
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
+                        </details>
                       </div>
                     </div>
                   );

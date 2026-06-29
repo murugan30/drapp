@@ -11,24 +11,24 @@ interface TopHeaderProps {
     rightElement?: React.ReactNode;
 }
 
-export default function TopHeader({ title, subtitle, onBack, backHref, className = 'bg-white backdrop-blur-xl', rightElement }: TopHeaderProps) {
+export default function TopHeader({ title, subtitle, onBack, backHref, className = '', rightElement }: TopHeaderProps) {
     const router = useRouter();
 
     const handleBack = () => {
-        if (onBack) {
-            onBack();
-        } else if (backHref) {
-            router.push(backHref);
-        } else {
+        // if (onBack) {
+        //     onBack();
+        // } else if (backHref) {
+        //     router.push(backHref);
+        // } else {
             router.back();
-        }
+        // }
     };
 
     return (
-        <div className={`flex items-center justify-between px-6 pt-4 pb-4 sticky top-0 z-20 transition-all border-b border-gray-100 ${className}`}>
+        <div className={`flex items-center justify-between px-6 pt-4 pb-4 sticky top-0 z-20 transition-all ${className}`}>
             <button
                 onClick={handleBack}
-                className="flex items-center justify-center text-gray-900 active:scale-95 transition-transform"
+                className="flex items-center justify-center text-[#0254b7] active:scale-95 transition-transform"
             >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m15 18-6-6 6-6" />
