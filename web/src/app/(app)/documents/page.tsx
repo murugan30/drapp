@@ -7,12 +7,21 @@ import { apiFetch, API_BASE } from '../../../lib/api';
 import styles from './documents.module.css';
 import { validateUploadFile } from '../../../lib/docUpload';
 
+type FoundPatient = {
+  _id: string;
+  fullName?: string;
+  mobile?: string;
+};
+
 export default function DocumentsPage() {
   const t = useTranslations();
   const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [patientId, setPatientId] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [foundPatient, setFoundPatient] = useState<FoundPatient | null>(null);
+  const [searching, setSearching] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -28,8 +37,8 @@ export default function DocumentsPage() {
       const stored = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null;
       return stored || '';
     }
-    return patientId.trim();
-  }, [isPatient, patientId, user]);
+    return foundPatient?._id || patientId.trim();
+  }, [isPatient, patientId, foundPatient, user]);
 
   const refresh = async (targetPatientId: string) => {
     if (!targetPatientId) {
@@ -61,9 +70,41 @@ export default function DocumentsPage() {
   }, [effectivePatientId, user]);
 
   const handlePickFile = () => {
+    if (!effectivePatientId) {
+      setError(isPatient ? 'Select an active member in Members first.' : 'Search a patient by mobile first.');
+      return;
+    }
     setError(null);
     setSuccess(null);
     fileRef.current?.click();
+  };
+
+  const handleSearchByMobile = async () => {
+    const q = mobile.trim();
+    if (!q) {
+      setFoundPatient(null);
+      setPatientId('');
+      return;
+    }
+    setSearching(true);
+    setError(null);
+    setFoundPatient(null);
+    setPatientId('');
+    try {
+      const res = await apiFetch<FoundPatient[]>(`/patients/by-mobile?mobile=${encodeURIComponent(q)}`);
+      const list = res || [];
+      if (list.length === 0) {
+        setError('No patient found with this mobile number');
+        return;
+      }
+      const p = list[0];
+      setFoundPatient(p);
+      setPatientId(p._id);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to search patient');
+    } finally {
+      setSearching(false);
+    }
   };
 
   const handleUpload = async (file: File) => {
@@ -135,18 +176,42 @@ export default function DocumentsPage() {
     <div className={styles.wrapper}>
       <div className={styles.headerActionsRow}>
         {!isPatient ? (
-          <input
-            className={styles.input}
-            value={patientId}
-            onChange={(e) => setPatientId(e.target.value)}
-            placeholder="Patient ID"
-            inputMode="text"
-          />
+          <div className={styles.mobileSearch}>
+            <div className={styles.mobileInputRow}>
+              <input
+                className={styles.input}
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void handleSearchByMobile();
+                  }
+                }}
+                placeholder="Search patient by mobile"
+                inputMode="tel"
+              />
+              <button
+                type="button"
+                className={styles.searchButton}
+                onClick={() => void handleSearchByMobile()}
+                disabled={searching || !mobile.trim()}
+              >
+                {searching ? '…' : 'Search'}
+              </button>
+            </div>
+            {foundPatient ? (
+              <div className={styles.foundPatient}>
+                <span className={styles.foundPatientName}>{foundPatient.fullName || 'Patient'}</span>
+                <span className={styles.foundPatientMobile}>{foundPatient.mobile || '—'}</span>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <span />
         )}
         <div className={styles.headerActionsRight}>
-          <button className={styles.button} onClick={handlePickFile} disabled={busy || !effectivePatientId}>
+          <button className={styles.button} onClick={handlePickFile} disabled={busy}>
             {busy ? 'Uploading…' : 'Upload report'}
           </button>
           <input
@@ -169,7 +234,7 @@ export default function DocumentsPage() {
         {loading ? (
           <p>Loading…</p>
         ) : !effectivePatientId ? (
-          <p>{isPatient ? 'Select an active member in Members first.' : 'Enter a patient ID to view documents.'}</p>
+          <p>{isPatient ? 'Select an active member in Members first.' : 'Search a patient by mobile to view documents.'}</p>
         ) : documents.length === 0 ? (
           <p>No documents uploaded yet.</p>
         ) : (

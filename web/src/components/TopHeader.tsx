@@ -25,7 +25,7 @@ export default function TopHeader({ title, subtitle, onBack, backHref, className
     };
 
     return (
-        <div className={`flex items-center justify-between px-6 pt-4 pb-4 sticky top-0 z-20 transition-all ${className}`}>
+        <div className={`flex items-center justify-between px-6 pt-4 pb-4 sticky top-0 z-20 transition-all bg-[#ffffff] ${className}`}>
             <button
                 onClick={handleBack}
                 className="flex items-center justify-center text-[#0254b7] active:scale-95 transition-transform"

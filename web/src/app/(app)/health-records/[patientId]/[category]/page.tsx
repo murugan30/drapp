@@ -108,7 +108,14 @@ export default function HealthRecordCategoryListPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadCategory, setUploadCategory] = useState<CategoryKey>('uploads');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
   const canView = user?.role === 'patient' || user?.role === 'doctor' || user?.role === 'admin' || user?.role === 'assistant' || user?.role === 'lab';
+  const isPatient = user?.role === 'patient';
+  const isLab = user?.role === 'lab';
+  const isStaffUploader = user?.role === 'doctor' || user?.role === 'admin' || user?.role === 'assistant';
 
   useEffect(() => {
     const load = async () => {
@@ -358,14 +365,39 @@ export default function HealthRecordCategoryListPage() {
     return out;
   }, [allDocs, category, docQuery, docTimeRange, sortBy, typeFilter]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset file input
-    e.target.value = '';
-
     const validation = validateUploadFile(file);
+    if (!validation.ok) {
+      setError(validation.error);
+      e.target.value = '';
+      return;
+    }
+
+    setError(null);
+    setUploadFile(file);
+
+    let defaultCat: CategoryKey;
+    if (isPatient) {
+      defaultCat = 'uploads';
+    } else if (isLab) {
+      defaultCat = 'lab';
+    } else {
+      const staffCategories: CategoryKey[] = ['prescriptions', 'lab', 'imaging', 'other'];
+      defaultCat = staffCategories.includes(category as CategoryKey) ? (category as CategoryKey) : 'other';
+    }
+    setUploadCategory(defaultCat);
+
+    setShowUploadModal(true);
+    e.target.value = '';
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!uploadFile) return;
+
+    const validation = validateUploadFile(uploadFile);
     if (!validation.ok) {
       setError(validation.error);
       return;
@@ -374,15 +406,14 @@ export default function HealthRecordCategoryListPage() {
     setUploading(true);
     setError(null);
     try {
-      // 1. Get presigned url
       const res = await apiFetch<any>('/documents/upload', {
         method: 'POST',
         body: JSON.stringify({
           patientId: patientId,
-          fileName: file.name,
+          fileName: uploadFile.name,
           mimeType: validation.mimeType,
-          size: file.size,
-          category: user?.role === 'lab' ? 'lab' : 'uploads',
+          size: uploadFile.size,
+          category: uploadCategory,
         }),
       });
 
@@ -393,12 +424,11 @@ export default function HealthRecordCategoryListPage() {
         throw new Error('Failed to get upload capabilities.');
       }
 
-      // 2. Upload to S3/Local
       const isLocal = uploadUrl.includes('/api/documents/local');
       const putRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': validation.mimeType },
-        body: file,
+        body: uploadFile,
         ...(isLocal ? { credentials: 'include' } : {}),
       });
 
@@ -407,9 +437,10 @@ export default function HealthRecordCategoryListPage() {
         throw new Error(`Failed to upload: ${putRes.status} ${txt}`);
       }
 
-      // 3. Refresh the doc list so the user sees it immediately
       const refreshReq = await apiFetch<PatientDoc[]>(`/documents/by-patient?patientId=${patientId}`);
       setAllDocs(refreshReq || []);
+      setShowUploadModal(false);
+      setUploadFile(null);
     } catch (e: any) {
       setError(e?.message || 'Failed to upload document.');
     } finally {
@@ -427,8 +458,7 @@ export default function HealthRecordCategoryListPage() {
         title={headerTitle}
         backHref="/health-records"
         rightElement={
-          ((user?.role === 'patient' && (category === 'uploads' || category === 'all')) ||
-            (user?.role === 'lab' && (category === 'lab' || category === 'all'))) ? (
+          canView ? (
             <label className="relative cursor-pointer text-sm font-bold text-[#0254b7] hover:text-blue-700 active:scale-95 transition-all flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full">
               {uploading ? (
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -444,7 +474,7 @@ export default function HealthRecordCategoryListPage() {
               <input
                 type="file"
                 className="hidden"
-                onChange={handleUpload}
+                onChange={handleFileSelect}
                 disabled={uploading}
                 accept="image/*,application/pdf"
               />
@@ -728,6 +758,112 @@ export default function HealthRecordCategoryListPage() {
             })}
           </div>
       </div>
+
+     {showUploadModal ? (
+       <div
+         className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center"
+         onClick={() => {
+           if (!uploading) {
+             setShowUploadModal(false);
+             setUploadFile(null);
+           }
+         }}
+       >
+         <div
+           className="w-full sm:max-w-xl bg-white rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden"
+           onClick={(e) => e.stopPropagation()}
+         >
+           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+             <div>
+               <div className="text-sm font-bold text-gray-900">Upload document</div>
+               <div className="text-xs font-medium text-gray-500">Choose where this record belongs</div>
+             </div>
+             <button
+               type="button"
+               className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-600 font-bold active:scale-95 transition-transform"
+               onClick={() => {
+                 setShowUploadModal(false);
+                 setUploadFile(null);
+               }}
+               disabled={uploading}
+               aria-label="Close upload"
+             >
+               ✕
+             </button>
+           </div>
+
+           <div className="px-5 py-5 flex flex-col gap-5">
+             <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3 flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0254b7] flex items-center justify-center shrink-0">
+                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16h16V8z" /><path d="M14 2v6h6" /></svg>
+               </div>
+               <div style={{ minWidth: 0 }}>
+                 <div className="text-sm font-bold text-gray-900 truncate">{uploadFile?.name}</div>
+                 <div className="text-xs font-medium text-gray-500">{uploadFile ? formatBytes(uploadFile.size) : ''}</div>
+               </div>
+             </div>
+
+             <div>
+               <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Record category</div>
+               <div className="grid grid-cols-2 gap-2">
+                 {([
+                   isPatient && { key: 'uploads', label: 'My Uploads', icon: '📤' },
+                   !isPatient && { key: 'prescriptions', label: 'Prescriptions', icon: '💊' },
+                   !isPatient && { key: 'lab', label: 'Lab Reports', icon: '🔬' },
+                   !isPatient && { key: 'imaging', label: 'Imaging', icon: '🩻' },
+                   !isPatient && { key: 'other', label: 'Other', icon: '�' },
+                 ].filter(Boolean) as { key: CategoryKey; label: string; icon: string }[]).map((c) => {
+                   const active = uploadCategory === c.key;
+                   return (
+                     <button
+                       key={c.key}
+                       type="button"
+                       onClick={() => setUploadCategory(c.key)}
+                       disabled={uploading}
+                       className={`flex items-center gap-2 px-3 py-3 rounded-2xl text-xs font-bold border transition-all text-left ${active
+                         ? 'bg-[#0254b7] text-white border-[#0254b7] shadow-md shadow-blue-500/20'
+                         : 'bg-white text-gray-700 border-gray-200 hover:border-blue-200'
+                         }`}
+                     >
+                       <span className="text-base">{c.icon}</span>
+                       <span>{c.label}</span>
+                     </button>
+                   );
+                 })}
+               </div>
+             </div>
+           </div>
+
+           <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+             <button
+               type="button"
+               onClick={() => {
+                 setShowUploadModal(false);
+                 setUploadFile(null);
+               }}
+               disabled={uploading}
+               className="text-sm font-bold text-gray-600 hover:text-gray-900 disabled:opacity-50"
+             >
+               Cancel
+             </button>
+             <button
+               type="button"
+               onClick={() => void handleConfirmUpload()}
+               disabled={uploading}
+               className="rounded-2xl bg-[#0254b7] px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 active:scale-95 transition-transform disabled:opacity-70 flex items-center gap-2"
+             >
+               {uploading ? (
+                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                 </svg>
+               ) : null}
+               Upload
+             </button>
+           </div>
+         </div>
+       </div>
+     ) : null}
 
      {previewOpen ? (
        <div

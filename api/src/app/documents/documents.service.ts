@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuid } from 'uuid';
+import { resolve } from 'path';
 import { DocumentEntity, DocumentDocument } from './document.schema';
 import { CreateDocumentDto } from './documents.dto';
 

@@ -146,100 +146,150 @@ export default function HomePage() {
     return prev || null;
   }, [appointments, now]);
 
+  const summaryCards = [
+    {
+      label: 'Documents',
+      value: summaryLoading ? '—' : documentCount,
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" />
+        </svg>
+      ),
+      color: 'from-amber-400 to-orange-500',
+      bg: 'bg-amber-50 text-amber-600',
+    },
+    {
+      label: 'Records',
+      value: summaryLoading ? '—' : recordCount,
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
+      ),
+      color: 'from-rose-400 to-pink-500',
+      bg: 'bg-rose-50 text-rose-600',
+    },
+    {
+      label: 'Appointments',
+      value: loading ? '—' : appointments.length,
+      icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 2v3" /><path d="M16 2v3" /><path d="M3 9h18" /><path d="M5 5h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+        </svg>
+      ),
+      color: 'from-blue-400 to-[#0254b7]',
+      bg: 'bg-blue-50 text-[#0254b7]',
+    },
+  ];
+
   return (
-    <div className="-mx-6 md:-mx-8 min-h-[calc(100vh-var(--shell-top-offset))] pb-12">
-      {/* Dynamic Native-Feel Header */}
-      <div className="px-6 md:px-8 pt-2 pb-10 rounded-b-[2.5rem] mb-8 relative z-10 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[13px] font-bold text-[#0254b7] tracking-widest uppercase flex items-center gap-1.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            {todayStr}
-          </p>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center p-0.5 border-2 border-white shadow-sm ring-1 ring-black/5">
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#0254b7] to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
-              {/* Display First Initial */}
-              {activeMemberName ? activeMemberName.charAt(0).toUpperCase() : (user?.name ? user.name.charAt(0).toUpperCase() : 'P')}
-            </div>
-          </div>
-        </div>
-        <h1 className="text-2xl leading-tight font-bold tracking-tight text-gray-900 mt-2">
-          {greeting},<br />
-          <span className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-800 to-gray-500">
-            {activeMemberName || user?.name || 'Patient'}
-          </span>
-        </h1>
-      </div>
+    <div className="min-h-screen bg-[#f4f6fb]">
+      <div className="max-w-2xl mx-auto">
+        {/* Floating welcome card */}
+        <div className="relative bg-gradient-to-br from-[#0254b7] to-[#0b4bba] rounded-[2.5rem] px-6 sm:px-8 pt-6 pb-8 shadow-xl shadow-blue-500/20 overflow-hidden mb-6">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl" />
 
-      <div className="max-w-md mx-auto px-6 md:px-8 space-y-8">
-
-        {/* Up Next - Hero Card */}
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h2 className="text-lg font-bold text-gray-900">Up Next</h2>
-            {upcomingAppointment && (
-              <Link href="/appointments" className="text-sm font-bold text-[#0254b7] hover:text-blue-700 active:text-blue-800 transition-colors">
-                View All
-              </Link>
-            )}
-          </div>
-
-          {loading ? (
-            <div className="h-40 bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center justify-center animate-pulse">
-              <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-[#0254b7] animate-spin" />
-            </div>
-          ) : upcomingAppointment ? (
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#0254b7] to-[#0b4bba] rounded-[2rem] p-6 shadow-lg shadow-blue-500/20 text-white">
-              {/* Decorative blobs */}
-              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-24 h-24 bg-blue-300 opacity-20 rounded-full blur-xl pointer-events-none" />
-
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-xs font-bold tracking-wide uppercase mb-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    Confirmed
-                  </div>
-                  <h3 className="text-xl font-bold leading-tight mb-1">
-                    {doctorNameById.get(upcomingAppointment.doctorId) || 'Doctor'}
-                  </h3>
-                  <p className="text-blue-100 text-sm font-medium">
-                    {memberNameById.get(upcomingAppointment.patientId) || 'Member'}
-                    {' · '}
-                    {new Date(upcomingAppointment.scheduledAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </p>
-                </div>
-
-                <div className="mt-6 flex items-center gap-4 bg-black/10 rounded-2xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-blue-100 uppercase tracking-widest">Time</div>
-                      <div className="text-sm font-bold">
-                        {new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(upcomingAppointment.scheduledAt))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm text-center flex flex-col items-center justify-center py-10">
-              <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#0254b7] mb-4">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[13px] font-bold text-blue-200 tracking-widest uppercase flex items-center gap-1.5">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                   <line x1="16" y1="2" x2="16" y2="6" />
                   <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {todayStr}
+              </p>
+              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                {activeMemberName ? activeMemberName.charAt(0).toUpperCase() : (user?.name ? user.name.charAt(0).toUpperCase() : 'P')}
+              </div>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+              {greeting},
+            </h1>
+            <p className="mt-2 text-2xl sm:text-3xl font-bold text-white/90">{activeMemberName || user?.name || 'Patient'}</p>
+
+            {/* Member selector */}
+            <div className="mt-6 flex items-center gap-3 overflow-x-auto pb-2 -mx-6 px-6 hide-scrollbar [&::-webkit-scrollbar]:hidden">
+              {members.map((m) => {
+                const active = m._id === activeMemberId;
+                return (
+                  <button
+                    key={m._id}
+                    type="button"
+                    onClick={() => {
+                      setActiveMemberId(m._id);
+                      const storageKey = `activeMemberId:${user?.id}`;
+                      if (typeof window !== 'undefined' && user?.id) {
+                        window.localStorage.setItem(storageKey, m._id);
+                      }
+                    }}
+                    className={`flex-shrink-0 flex items-center gap-2 rounded-full pl-1 pr-4 py-1 border transition-all ${active ? 'bg-white text-[#0254b7] border-white shadow-lg' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${active ? 'bg-[#0254b7] text-white' : 'bg-white/20 text-white'}`}>
+                      {m.fullName.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm font-bold">{m.fullName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {/* Up Next */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="text-lg font-bold text-gray-900">Up Next</h2>
+            {upcomingAppointment && (
+              <Link href="/appointments" className="text-sm font-bold text-[#0254b7] hover:text-blue-700">View All</Link>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="h-48 bg-white rounded-3xl border border-slate-100 shadow-lg p-6 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-4 border-gray-200 border-t-[#0254b7] animate-spin" />
+            </div>
+          ) : upcomingAppointment ? (
+            <div className="relative overflow-hidden bg-white rounded-3xl p-6 shadow-lg shadow-slate-200/50 border border-slate-100">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100/50 to-indigo-100/50 rounded-full -mr-10 -mt-10 blur-2xl" />
+              <div className="relative flex flex-col gap-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0254b7] to-indigo-600 flex items-center justify-center text-white shadow-md">
+                      <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M8 2v3" /><path d="M16 2v3" /><path d="M3 9h18" /><path d="M5 5h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Confirmed
+                      </div>
+                      <h3 className="mt-1 text-lg font-bold text-gray-900">{doctorNameById.get(upcomingAppointment.doctorId) || 'Doctor'}</h3>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-extrabold text-[#0254b7]">
+                      {new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(new Date(upcomingAppointment.scheduledAt))}
+                    </div>
+                    <div className="text-xs font-semibold text-gray-400">
+                      {new Date(upcomingAppointment.scheduledAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" /></svg>
+                  {memberNameById.get(upcomingAppointment.patientId) || 'Member'}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/50 p-6 text-center flex flex-col items-center justify-center py-10">
+              <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#0254b7] mb-4">
+                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
               <h3 className="text-[17px] font-bold text-gray-900 mb-1">No upcoming visits</h3>
@@ -251,129 +301,76 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Quick Actions Grid */}
-        <div className="animate-in fade-in slide-in-from-bottom-6 duration-500 delay-200 fill-mode-both">
+        {/* Health Snapshot */}
+        <div className="mb-6">
+          <div className="px-1 mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Health Snapshot</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {summaryCards.map((card) => (
+              <Link key={card.label} href="/health-records" className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
+                <div className={`w-10 h-10 rounded-2xl ${card.bg} flex items-center justify-center mb-3`}>
+                  {card.icon}
+                </div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{card.label}</div>
+                <div className="mt-1 text-2xl font-extrabold text-gray-900">{card.value}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-6">
           <div className="px-1 mb-3">
             <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Link href="/appointments" className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4 hover:border-blue-100 hover:shadow-md active:scale-[0.97] transition-all group">
-              <div className="w-12 h-12 rounded-[1rem] bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-100 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-gray-900 text-sm leading-tight">Book Visit</div>
-                <div className="text-xs text-gray-500 font-medium mt-0.5">Schedule new</div>
-              </div>
-            </Link>
-
-            <Link href="/health-records" className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4 hover:border-rose-100 hover:shadow-md active:scale-[0.97] transition-all group">
-              <div className="w-12 h-12 rounded-[1rem] bg-rose-50 flex items-center justify-center text-rose-500 group-hover:bg-rose-100 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-gray-900 text-sm leading-tight">Records</div>
-                <div className="text-xs text-gray-500 font-medium mt-0.5">Vitals & labs</div>
-              </div>
-            </Link>
-
-            <Link href="/health-records" className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4 hover:border-emerald-100 hover:shadow-md active:scale-[0.97] transition-all group">
-              <div className="w-12 h-12 rounded-[1rem] bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-100 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.5 20.5 7 17l3.5-3.5" />
-                  <path d="M7 17h8.5a4.5 4.5 0 0 0 0-9h-1.3" />
-                  <rect x="2" y="4" width="20" height="20" rx="2" ry="2" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-gray-900 text-sm leading-tight">Prescriptions</div>
-                <div className="text-xs text-gray-500 font-medium mt-0.5">Medications</div>
-              </div>
-            </Link>
-
-            <Link href="/patients" className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col gap-4 hover:border-amber-100 hover:shadow-md active:scale-[0.97] transition-all group">
-              <div className="w-12 h-12 rounded-[1rem] bg-amber-50 flex items-center justify-center text-amber-500 group-hover:bg-amber-100 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-gray-900 text-sm leading-tight">Family</div>
-                <div className="text-xs text-gray-500 font-medium mt-0.5">Manage members</div>
-              </div>
-            </Link>
+            {[
+              { href: '/appointments', label: 'Book Visit', sub: 'Schedule new', icon: 'plus', color: 'bg-indigo-50 text-indigo-500' },
+              { href: '/health-records', label: 'Records', sub: 'Vitals & labs', icon: 'activity', color: 'bg-rose-50 text-rose-500' },
+              { href: '/documents', label: 'Uploads', sub: 'Documents', icon: 'file', color: 'bg-emerald-50 text-emerald-500' },
+              { href: '/patients', label: 'Family', sub: 'Members', icon: 'users', color: 'bg-amber-50 text-amber-500' },
+            ].map((action) => (
+              <Link key={action.label} href={action.href} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-3 hover:border-blue-200 hover:shadow-md active:scale-[0.97] transition-all group">
+                <div className={`w-12 h-12 rounded-2xl ${action.color} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                  {action.icon === 'plus' && <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>}
+                  {action.icon === 'activity' && <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>}
+                  {action.icon === 'file' && <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /></svg>}
+                  {action.icon === 'users' && <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>}
+                </div>
+                <div>
+                  <div className="font-bold text-gray-900 text-sm">{action.label}</div>
+                  <div className="text-xs text-gray-400 font-semibold mt-0.5">{action.sub}</div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
 
         {/* Recent Summary */}
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-300 fill-mode-both">
-          <div className="px-1 mb-3">
-            <h2 className="text-lg font-bold text-gray-900">Your Summary</h2>
-          </div>
-          <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm relative overflow-hidden">
-            <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-blue-100/60 blur-2xl" />
-            <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-100/60 blur-2xl" />
- 
-            <div className="relative">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs font-extrabold tracking-widest text-[#0254b7] uppercase">Active member</div>
-                  <div className="mt-1 text-base font-bold text-gray-900">
-                    {activeMemberName || '—'}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-blue-100/60 blur-2xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-indigo-100/60 blur-2xl" />
+          <div className="relative">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-extrabold tracking-widest text-[#0254b7] uppercase">Recent Activity</div>
+                {recentAppointment ? (
+                  <div className="mt-2 text-sm text-gray-600 font-medium">
+                    Last visit: <span className="font-bold text-gray-900">{doctorNameById.get(recentAppointment.doctorId) || 'Doctor'}</span>
+                    {' · '}
+                    {new Date(recentAppointment.scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </div>
-                  {recentAppointment ? (
-                    <div className="mt-2 text-sm text-gray-500 font-medium">
-                      Last appointment:{' '}
-                      <span className="text-gray-700">
-                        {doctorNameById.get(recentAppointment.doctorId) || 'Doctor'}
-                      </span>
-                      {' · '}
-                      {new Date(recentAppointment.scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </div>
-                  ) : (
-                    <div className="mt-2 text-sm text-gray-500 font-medium">No recent appointments yet.</div>
-                  )}
-                </div>
- 
-                <Link
-                  href="/health-records"
-                  className="inline-flex items-center justify-center px-4 py-2.5 rounded-2xl bg-[#0254b7] text-white font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition-all"
-                >
-                  Open records
-                </Link>
+                ) : (
+                  <div className="mt-2 text-sm text-gray-500 font-medium">No recent appointments yet.</div>
+                )}
               </div>
- 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-gray-100 bg-white/70 p-4">
-                  <div className="text-xs font-bold text-gray-500">Documents</div>
-                  <div className="mt-1 text-2xl font-extrabold text-gray-900">
-                    {summaryLoading ? '—' : documentCount}
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-gray-100 bg-white/70 p-4">
-                  <div className="text-xs font-bold text-gray-500">Records</div>
-                  <div className="mt-1 text-2xl font-extrabold text-gray-900">
-                    {summaryLoading ? '—' : recordCount}
-                  </div>
-                </div>
-              </div>
- 
-              {activeMemberId ? (
-                <div className="mt-4 text-xs text-gray-400 font-medium">
-                  Showing summary for your active member.
-                </div>
-              ) : null}
+              <Link href="/health-records" className="inline-flex items-center justify-center px-4 py-2.5 rounded-2xl bg-[#0254b7] text-white font-bold text-sm shadow-md hover:bg-blue-700 active:scale-95 transition-all">
+                Records
+              </Link>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

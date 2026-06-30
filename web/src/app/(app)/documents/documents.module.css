@@ -67,3 +67,29 @@
 .linkBtn {
   @apply border border-blue-200 text-[#0254b7] rounded-2xl px-3 py-2 text-xs font-semibold hover:bg-blue-50;
 }
+
+.mobileSearch {
+  @apply flex flex-col gap-2;
+  width: min(420px, 100%);
+  max-width: 100%;
+}
+
+.mobileInputRow {
+  @apply flex items-center gap-2;
+}
+
+.searchButton {
+  @apply bg-[#0254b7] text-white rounded-md px-3 py-2 text-sm font-semibold shrink-0 disabled:opacity-50;
+}
+
+.foundPatient {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.foundPatientName {
+  @apply font-bold text-gray-900;
+}
+
+.foundPatientMobile {
+  @apply text-xs font-semibold text-gray-500;
+}

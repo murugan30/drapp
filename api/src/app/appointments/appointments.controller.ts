@@ -69,7 +69,7 @@ export class AppointmentsController {
     return this.appointmentsService.listBookedByDoctorAndDate(doctorId, date);
   }
 
-  @Roles(Role.Admin, Role.Doctor)
+  @Roles(Role.Admin, Role.Doctor, Role.Assistant, Role.Lab)
   @Get('by-doctor')
   listByDoctor(@Req() req: any, @Query('doctorId') doctorId: string, @Query('date') date: string) {
     if (req.user?.role === Role.Doctor && doctorId !== req.user.sub) {

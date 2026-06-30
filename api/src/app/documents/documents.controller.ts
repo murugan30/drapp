@@ -1,7 +1,7 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Get, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { createWriteStream } from 'fs';
-import { mkdir } from 'fs/promises';
-import { join } from 'path';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { createReadStream, createWriteStream, existsSync, statSync } from 'fs';
+import { mkdir, unlink } from 'fs/promises';
+import { join, resolve } from 'path';
 import { pipeline } from 'stream/promises';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../common/jwt-auth.guard';
@@ -92,20 +92,25 @@ export class DocumentsController {
       }
     }
 
-    let bytes = 0;
-    req.on('data', (chunk: any) => {
-      bytes += chunk?.length || 0;
-      if (bytes > maxBytes) {
-        req.destroy(new Error('Upload too large'));
-      }
-    });
-
-    const uploadRoot = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+    const uploadRoot = resolve(process.env.UPLOAD_DIR || join(process.cwd(), 'uploads'));
     await mkdir(uploadRoot, { recursive: true });
     const filePath = join(uploadRoot, `${doc._id.toString()}-${doc.fileName}`);
+
+    // Stream the full request body to disk first. A manual req.on('data') counter
+    // pre-consumes chunks and causes the write stream to receive an empty file.
     await pipeline(req, createWriteStream(filePath));
 
-    await (doc as any).updateOne({ localPath: filePath });
+    const written = existsSync(filePath) ? statSync(filePath).size : 0;
+    if (written > maxBytes) {
+      await unlink(filePath).catch(() => null);
+      throw new BadRequestException(`Upload too large. Max ${Math.round((maxBytes / (1024 * 1024)) * 10) / 10}MB.`);
+    }
+    if (written === 0) {
+      await unlink(filePath).catch(() => null);
+      throw new BadRequestException('Upload is empty');
+    }
+
+    await (doc as any).updateOne({ localPath: filePath, size: written });
     res.status(200).send('OK');
   }
 
@@ -152,7 +157,15 @@ export class DocumentsController {
     }
     res.setHeader('Content-Type', doc.mimeType);
     res.setHeader('Content-Disposition', `attachment; filename="${doc.fileName}"`);
-    return res.sendFile((doc as any).localPath);
+    const localPath = (doc as any).localPath as string;
+    if (!existsSync(localPath)) {
+      throw new NotFoundException('File not found on disk');
+    }
+    try {
+      await pipeline(createReadStream(localPath), res);
+    } catch (e: any) {
+      throw new Error(`Failed to stream file: ${e?.message || 'unknown'}`);
+    }
   }
 
   @Roles(Role.Admin, Role.Doctor, Role.Assistant, Role.Lab, Role.Patient)
@@ -170,7 +183,15 @@ export class DocumentsController {
     }
     res.setHeader('Content-Type', doc.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${doc.fileName}"`);
-    return res.sendFile((doc as any).localPath);
+    const localPath = (doc as any).localPath as string;
+    if (!existsSync(localPath)) {
+      throw new NotFoundException('File not found on disk');
+    }
+    try {
+      await pipeline(createReadStream(localPath), res);
+    } catch (e: any) {
+      throw new Error(`Failed to stream file: ${e?.message || 'unknown'}`);
+    }
   }
 
   @Roles(Role.Admin, Role.Doctor, Role.Assistant, Role.Lab, Role.Patient)
